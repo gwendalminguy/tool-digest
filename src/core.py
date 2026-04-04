@@ -1,6 +1,6 @@
 #!/venv/bin/python3
 """
-main.py
+core.py
 Module containing core functions.
 """
 from datetime import datetime, timedelta

@@ -1,10 +1,9 @@
 #!/venv/bin/python3
 """
 main.py
-Script to summarize several RSS feeds for a specific period and save the result as a structured markdown file.
+Module containing core functions.
 """
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
 from google import genai
 from time import sleep
 from xml.etree import ElementTree
@@ -14,23 +13,6 @@ import json
 import os
 import requests
 import sys
-
-
-def main():
-    load_dotenv()
-
-    NOW = datetime.now()
-    TODAY = datetime.now().strftime('%Y-%m-%d')
-    INTERVAL = int(os.getenv("INTERVAL")) # In days.
-    OPML_URL = os.getenv("OPML_URL")
-    API_KEY = os.getenv("GEMINI_API_KEY")
-
-    feeds = get_feeds(OPML_URL)
-    content = get_news(NOW, INTERVAL, feeds)
-    result = digest_news(INTERVAL, API_KEY, content)
-
-    if result:
-        generate_markdown(TODAY, result)
 
 
 def get_feeds(OPML_URL: str) -> list:
@@ -91,7 +73,7 @@ def digest_news(INTERVAL: int, API_KEY:str, content: list) -> str | None:
     trial = 1
 
     # Get instructions from markdown file.
-    with open("instructions.md", "r", encoding="utf-8") as file:
+    with open("../instructions.md", "r", encoding="utf-8") as file:
         instructions = file.read()
 
     while trial <= 5:
@@ -166,7 +148,3 @@ def generate_markdown(TODAY: int, digest: str):
     # Write digest to a file.
     with open(filename, "w", encoding="utf-8") as file:
         file.write(result)
-
-
-if __name__ == "__main__":
-    main()

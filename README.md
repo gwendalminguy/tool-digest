@@ -32,7 +32,14 @@ $ git clone https://github.com/gwendalminguy/tool-digest.git
 
 **2. Installing the requirements**
 
-A virtual environment mus be created in order to install the requirements:
+To install Digest, `python3` and `crontab` are required. They can be installed as follows:
+
+```
+$ sudo apt install python3
+$ sudo apt install cron
+```
+
+A virtual environment must be created in order to install the requirements:
 
 ```
 $ python3 -m venv venv

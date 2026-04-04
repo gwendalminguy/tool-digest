@@ -40,10 +40,11 @@ def get_feeds(OPML_URL: str) -> list:
     return feeds
 
 
-def get_news(NOW: int, INTERVAL: int, feeds: list) -> list:
+def get_news(INTERVAL: int, feeds: list) -> list:
     """
     Retrieve all articles from a list of RSS feed URLs for a given period of time.
     """
+    NOW = datetime.now()
     WEEK = NOW - timedelta(days=INTERVAL)
 
     contents = [feedparser.parse(element["url"]) for element in feeds]

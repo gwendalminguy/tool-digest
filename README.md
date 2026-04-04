@@ -15,16 +15,39 @@ The project contains several files and directories, which are the following:
 | `news/<date>.md` | The markdown files containing the summarized news. |
 | [`main.py`](https://github.com/gwendalminguy/tool-digest/blob/main/main.py) | The python script to summarize news from a group of RSS feeds. |
 | [`install.sh`](https://github.com/gwendalminguy/tool-digest/blob/main/install.sh) | The bash script setting automations to launch the script on a regular basis. |
-| [`instructions.md`](https://github.com/gwendalminguy/tool-digest/blob/main/instructions.md) | The markdown file containing instructions to guide AI into producing a structured JSON output. |
+| [`instructions.md`](https://github.com/gwendalminguy/tool-digest/blob/main/instructions.md) | The markdown file containing AI instructions to produce a structured JSON output. |
 | [`requirements.txt`](https://github.com/gwendalminguy/tool-digest/blob/main/requirements.txt) | The text file containing requirements to install. |
+
+## 🔧 Prerequisites
+
+Before installing Digest, make sure all of the following prerequisites are met:
+
+**1. Programs**
+
+Digest runs using `python3` and `crontab`. Both can be installed as follows:
+
+```
+$ sudo apt install python3
+$ sudo apt install cron
+```
+
+**2. OPML URL**
+
+...
+
+**3. Gemini API Key**
+
+...
 
 ## ⚙️ Installation
 
-In order to install Digest, the three steps of this guide must be followed:
+### Procedure
+
+In order to install and use Digest, the three steps of this guide must be followed:
 
 **1. Cloning the repository**
 
-To use Digest, this repository must be cloned locally, using the following command:
+Clone this repository locally:
 
 ```
 $ git clone https://github.com/gwendalminguy/tool-digest.git
@@ -32,14 +55,7 @@ $ git clone https://github.com/gwendalminguy/tool-digest.git
 
 **2. Installing the requirements**
 
-To install Digest, `python3` and `crontab` are required. They can be installed as follows:
-
-```
-$ sudo apt install python3
-$ sudo apt install cron
-```
-
-A virtual environment must be created in order to install the requirements:
+Create and activate a virtual environment, then install dependencies:
 
 ```
 $ python3 -m venv venv
@@ -49,7 +65,7 @@ $ pip install -r requirements
 
 **3. Setting the configuration**
 
-To let Digest run on a regular basis, an automation must be set, along with some configuration details. This can be achieved by launching the `install.sh` bash script, and must be done at the root of the Digest directory, using these commands:
+To run Digest automatically on a regular basis, an scheduled task must be set (along with some configuration details). Run the installation script from the project root:
 
 ```
 $ chmod u+x install.sh
@@ -57,4 +73,9 @@ $ ./install.sh
 $ deactivate
 ```
 
-This will allow the execution on a regular schedule of the `main.py` script. The summarized news will be saved weekly as a markdown file in the `news/` directory. The user might be prompted by the system to authorize the automations, to allow the script execution.
+The installation script will:
+- ask for required configuration values
+- create a `.env` file
+- set up a cron job to run Digest periodically
+
+The summarized news will be saved weekly as a markdown file in the `news/` directory. The user might be prompted by the system to authorize the automations, to allow the script execution.

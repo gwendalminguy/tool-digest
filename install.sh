@@ -15,7 +15,7 @@ fi
 
 # Setting Paths
 ROOT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MAIN=$(realpath "$ROOT_DIRECTORY/main.py")
+MAIN=$(realpath "$ROOT_DIRECTORY/src/main.py")
 ENV_FILE="$ROOT_DIRECTORY/.env"
 PYTHON=$(command -v python3)
 INTERVAL=7

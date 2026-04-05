@@ -26,14 +26,18 @@ DAYS = {
 }
 
 @app.command()
-def init(name: str):
+def init(
+    name: str = typer.Argument(help="Name of the project to configure."),
+    opml_url: str = typer.Option(prompt=True, help="OPML URL of the group of RSS feeds to use."),
+    gemini_api_key: str = typer.Option(prompt=True, hide_input=True, help="Gemini API key to use.")
+):
     """
     Initialize a new project by generating a configuration file.
     """
     NAME = name.strip().lower()
     DIGEST_DIR = os.path.expanduser("~/.digest")
-    OPML_URL = typer.prompt("OPML URL").strip()
-    GEMINI_API_KEY = typer.prompt("Gemini API Key").strip()
+    OPML_URL = opml_url.strip()
+    GEMINI_API_KEY = gemini_api_key.strip()
     NEWS_DIR = os.path.join(os.getcwd(), "news")
     INTERVAL = 7 # In days.
 
@@ -69,7 +73,7 @@ def init(name: str):
 
 @app.command()
 def cron(
-    name: str,
+    name: str = typer.Argument(help="Name of the project to create a cronjob for."),
     time: int = typer.Option(9, "--time", "-t", help="Hour of the day", min=0, max=23),
     day: str = typer.Option("sunday", "--day", "-d", help="Day of the week")
 ):
@@ -164,7 +168,9 @@ def ls():
 
 
 @app.command()
-def rm(name: str):
+def rm(
+    name: str = typer.Argument(help="Name of the project to delete."),
+):
     """
     Remove a project configuration and its associated cronjob if existing.
     """
@@ -209,7 +215,9 @@ def rm(name: str):
 
 
 @app.command()
-def run(name: str):
+def run(
+    name: str = typer.Argument(help="Name of the project to run."),
+):
     """
     Launch manually the summarization of recent news for a project.
     """

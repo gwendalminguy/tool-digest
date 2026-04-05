@@ -93,7 +93,8 @@ def cron(
         typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
         return
 
-    command = f"0 {time} * * {day} {PYTHON_PATH} -m digest.cli run {NAME}"
+    tag = f"# digest:{NAME}"
+    command = f"0 {time} * * {day} {PYTHON_PATH} -m digest.cli run {NAME} {tag}"
 
     # Retrieve all existing cronjobs.
     try:
@@ -102,15 +103,19 @@ def cron(
     except FileNotFoundError as e:
         typer.echo("[ERROR] Cron not installed. On Debian/Ubuntu, run [apt install cron] to install it.")
         raise typer.Exit(code=1)
-    else:
-        if command in current:
+
+    crontab = current.splitlines()
+
+    for line in crontab:
+        if line.strip().endswith(tag):
             typer.echo("[INFO] Cronjob already exists.")
             return
 
-        # Rewrite existing crontab and add new one.
-        crontab = current + f"{command}\n"
-        subprocess.run(["crontab", "-"], input=crontab, text=True)
-        typer.echo(f"[INFO] Cronjob added successfully for {NAME}.")
+    # Rewrite existing crontab and add new one.
+    crontab.append(f"{command}")
+    new = "\n".join(crontab) + "\n"
+    subprocess.run(["crontab", "-"], input=new, text=True)
+    typer.echo(f"[INFO] Cronjob added successfully for {NAME}.")
 
 
 @app.command()
@@ -188,16 +193,19 @@ def rm(name: str):
     except FileNotFoundError as e:
         return
 
-    command = f"digest.cli run {NAME}"
+    tag = f"# digest:{NAME}"
 
-    if command in current:
-        # Rewrite existing crontab without the one to remove.
-        crontab = current.split("\n")
-        updated = "\n".join([cronjob for cronjob in crontab if command not in cronjob])
-        subprocess.run(["crontab", "-"], input=updated, text=True)
-        typer.echo(f"[INFO] Cronjob deleted for {NAME}.")
-    else:
-        typer.echo(f"[INFO] No cronjob found for {name}.")
+    # Rewrite existing crontab without the one to remove.
+    crontab = current.splitlines()
+    updated = [line for line in crontab if not line.strip().endswith(tag)]
+
+    if len(updated) == len(crontab):
+        typer.echo(f"[INFO] No cronjob found for {NAME}.")
+        return
+
+    new = "\n".join(updated) + "\n"
+    subprocess.run(["crontab", "-"], input=new, text=True)
+    typer.echo(f"[INFO] Cronjob deleted for {NAME}.")
 
 
 @app.command()

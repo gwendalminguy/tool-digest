@@ -19,7 +19,14 @@ def get_feeds(OPML_URL: str) -> list:
     """
     Retrieve every RSS feed URL from an OPML URL.
     """
-    response = requests.get(OPML_URL)
+    headers={
+        "User-Agent": "Digest/0.1.0"
+    }
+
+    response = requests.get(
+        OPML_URL,
+        headers=headers
+    )
     response.raise_for_status()
 
     root = ElementTree.fromstring(response.content)

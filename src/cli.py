@@ -34,7 +34,7 @@ def init(name: str):
     DIGEST_DIR = os.path.expanduser("~/.digest")
     OPML_URL = typer.prompt("OPML URL").strip()
     GEMINI_API_KEY = typer.prompt("Gemini API Key").strip()
-    NEWS_DIR = os.getcwd() + "/news"
+    NEWS_DIR = os.path.join(os.getcwd(), "news")
     INTERVAL = 7 # In days.
 
     # Create necessary directories.
@@ -51,6 +51,11 @@ def init(name: str):
         f"INTERVAL={INTERVAL}"
     ]
 
+    # Confirm if configuration already exists.
+    if os.path.exists(CONFIG_PATH):
+        if not typer.confirm(f"[WARNING] {NAME} already exists. Overwrite?"):
+            raise typer.Abort()
+
     # Create configuration file in ~/.digest/
     with open(CONFIG_PATH, "w", encoding="utf-8") as file:
         file.write("\n".join(config))
@@ -58,8 +63,8 @@ def init(name: str):
     # Set READ and WRITE permissions for user.
     os.chmod(CONFIG_PATH, stat.S_IRUSR | stat.S_IWUSR)
 
-    typer.echo(f"Digest configuration file created at: {CONFIG_PATH}")
-    typer.echo(f"News will be saved as markdown files in: {NEWS_DIR}")
+    typer.echo(f"[INFO] Digest configuration file created at: {CONFIG_PATH}")
+    typer.echo(f"[INFO] News will be saved as markdown files in: {NEWS_DIR}")
 
 
 @app.command()
@@ -79,13 +84,13 @@ def cron(
     day = day.lower()
 
     if day not in DAYS:
-        typer.echo("Error: Invalid day.")
+        typer.echo("[ERROR] Invalid day.")
         raise typer.Exit(code=1)
 
     day = DAYS[day]
 
     if not os.path.exists(CONFIG_PATH):
-        typer.echo("Project not found. Run [digest init <name>] to initialize a new project.")
+        typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
         return
 
     command = f"0 {time} * * {day} {PYTHON_PATH} -m digest.cli run {NAME}"
@@ -95,17 +100,17 @@ def cron(
         result = subprocess.run(["crontab", "-l"], capture_output=True, text=True)
         current = result.stdout if result.returncode == 0 else ""
     except FileNotFoundError as e:
-        typer.echo("Error: Cron not installed. Run [apt install cron] to install it.")
+        typer.echo("[ERROR] Cron not installed. On Debian/Ubuntu, run [apt install cron] to install it.")
         raise typer.Exit(code=1)
     else:
         if command in current:
-            typer.echo("Cronjob already exists.")
+            typer.echo("[INFO] Cronjob already exists.")
             return
 
         # Rewrite existing crontab and add new one.
         crontab = current + f"{command}\n"
         subprocess.run(["crontab", "-"], input=crontab, text=True)
-        typer.echo(f"Cronjob added successfully for {NAME}.")
+        typer.echo(f"[INFO] Cronjob added successfully for {NAME}.")
 
 
 @app.command()
@@ -119,7 +124,10 @@ def ls():
     content = []
 
     if os.path.isdir(DIGEST_DIR):
-        files = [os.path.join(DIGEST_DIR, filename) for filename in os.listdir(DIGEST_DIR)]
+        files = [
+            os.path.join(DIGEST_DIR, filename) for filename in os.listdir(DIGEST_DIR)
+            if filename.startswith("config.") and filename.endswith(".env")
+        ]
 
     # Get name and news directory for each project.
     if files:
@@ -147,7 +155,7 @@ def ls():
             typer.echo(f"- {project['Name']:<15} {project['News']}")
 
     else:
-        typer.echo("No project found. Run [digest init <name>] to initialize a new project.")
+        typer.echo("[INFO] No project found. Run [digest init <name>] to initialize a new project.")
 
 
 @app.command()
@@ -161,17 +169,17 @@ def rm(name: str):
     PYTHON_PATH = sys.executable
 
     if not os.path.exists(CONFIG_PATH):
-        typer.echo("Project not found. Run [digest init <name>] to initialize a new project.")
+        typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
         return
 
     # Confirm removal.
-    if not typer.confirm(f"Remove {NAME}?"):
-        typer.echo("Deletion cancelled.")
+    if not typer.confirm(f"[WARNING] Remove {NAME}?"):
+        typer.echo("[INFO] Deletion cancelled.")
         raise typer.Abort()
 
     # Remove configuration file.
     os.remove(CONFIG_PATH)
-    typer.echo(f"Configuration file deleted for {NAME}.")
+    typer.echo(f"[INFO] Configuration file deleted for {NAME}.")
 
     # Remove cronjob.
     try:
@@ -187,9 +195,9 @@ def rm(name: str):
         crontab = current.split("\n")
         updated = "\n".join([cronjob for cronjob in crontab if command not in cronjob])
         subprocess.run(["crontab", "-"], input=updated, text=True)
-        typer.echo(f"Cronjob deleted for {NAME}.")
+        typer.echo(f"[INFO] Cronjob deleted for {NAME}.")
     else:
-        typer.echo(f"No cronjob found for {name}.")
+        typer.echo(f"[INFO] No cronjob found for {name}.")
 
 
 @app.command()
@@ -217,7 +225,7 @@ def run(name: str):
             generate_markdown(TODAY, result)
 
     else:
-        typer.echo("Project not found. Run [digest init <name>] to initialize a new project.")
+        typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
 
 
 if __name__ == "__main__":

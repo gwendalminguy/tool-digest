@@ -2,12 +2,14 @@
 cli.py
 Module containing command-line interface functions.
 """
+from core import get_feeds, get_news, digest_news, generate_markdown
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from core import get_feeds, get_news, digest_news, generate_markdown
 
 import os
 import stat
+import subprocess
+import sys
 import typer
 
 
@@ -47,6 +49,38 @@ def init(name: str):
 
     typer.echo(f"Digest configuration file created at: {CONFIG_PATH}")
     typer.echo(f"News will be saved as markdown files in: {NEWS_DIR}")
+
+
+@app.command()
+def cron(name: str):
+    """
+    Create a cronjob to run Digest every week for the specified project.
+    """
+    DIGEST_DIR = os.path.expanduser("~/.digest")
+    CONFIG_PATH = os.path.join(DIGEST_DIR, f"config.{name.strip().lower()}.env")
+    PYTHON_PATH = sys.executable
+
+    if os.path.isdir(DIGEST_DIR) and os.path.exists(CONFIG_PATH):
+        command = f"0 */6 * * 0 {PYTHON_PATH} -m digest.cli run {name.strip().lower()}"
+
+        # Retrieve all existing cronjobs.
+        try:
+            result = subprocess.run(["crontab", "-l"], capture_output=True, text=True)
+            current = result.stdout if result.returncode == 0 else ""
+        except FileNotFoundError as e:
+            typer.echo("Error: Cron not installed. Run [apt install cron] to install it.")
+        else:
+            if command in current:
+                typer.echo("Cronjob already exists.")
+                return
+
+            # Rewrite existing crontab and add new one.
+            crontab = current + f"{command}\n"
+            subprocess.run(["crontab", "-"], input=crontab, text=True)
+            typer.echo(f"Cronjob added successfully for {name}.")
+
+    else:
+        typer.echo("Project not found. Run [digest init <name>] to initialize a new project.")
 
 
 @app.command()
@@ -94,17 +128,35 @@ def ls():
 @app.command()
 def rm(name: str):
     """
-    Remove a project configuration file.
+    Remove a project configuration and its associated cronjob if existing.
     """
     DIGEST_DIR = os.path.expanduser("~/.digest")
     CONFIG_PATH = os.path.join(DIGEST_DIR, f"config.{name.strip().lower()}.env")
+    PYTHON_PATH = sys.executable
 
     if os.path.isdir(DIGEST_DIR) and os.path.exists(CONFIG_PATH):
         confirmation = typer.confirm(f"Remove {name.strip().lower()}?")
 
+        command = f"digest.cli run {name.strip().lower()}"
+
         if confirmation:
             os.remove(CONFIG_PATH)
-            typer.echo("Deleted.")
+            typer.echo(f"Configuration file deleted for {name}.")
+
+            # Retrieve all existing cronjobs.
+            try:
+                result = subprocess.run(["crontab", "-l"], capture_output=True, text=True)
+                current = result.stdout if result.returncode == 0 else ""
+            except FileNotFoundError as e:
+                pass
+            else:
+                if command in current:
+                    # Rewrite existing crontab without the one to remove.
+                    crontab = current.split("\n")
+                    updated = "\n".join([cronjob for cronjob in crontab if command not in cronjob])
+                    subprocess.run(["crontab", "-"], input=updated, text=True)
+                    typer.echo(f"Cronjob deleted for {name}.")
+
         else:
             typer.echo("Deletion cancelled.")
             raise typer.Abort()

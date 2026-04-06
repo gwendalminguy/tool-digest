@@ -72,7 +72,7 @@ def get_news(INTERVAL: int, feeds: list) -> list:
     return news
 
 
-def digest_news(INTERVAL: int, API_KEY:str, content: list) -> str | None:
+def digest_news(INTERVAL: int, API_KEY:str, content: list, silent: bool) -> str | None:
     """
     Summarize as a structured JSON a list of articles.
     """
@@ -101,7 +101,8 @@ def digest_news(INTERVAL: int, API_KEY:str, content: list) -> str | None:
             break
 
         except Exception as e:
-            print(f"Error (Trial {trial}): {e}")
+            if not silent:
+                print(f"Error (Trial {trial}): {e}")
             sleep(trial * 3)
             trial += 1
 
@@ -115,13 +116,14 @@ def digest_news(INTERVAL: int, API_KEY:str, content: list) -> str | None:
     try:
         result = json.loads(raw)
     except json.JSONDecodeError:
-        print("Error: Invalid JSON")
+        if not silent:
+            print("Error: Invalid JSON")
         return None
 
     return result
 
 
-def generate_markdown(TODAY: int, digest: str):
+def generate_markdown(TODAY: int, digest: str, silent: bool):
     """
     Transform a structured JSON into a readable markdown file.
     """
@@ -156,3 +158,6 @@ def generate_markdown(TODAY: int, digest: str):
     # Write digest to a file.
     with open(filename, "w", encoding="utf-8") as file:
         file.write(result)
+
+    if not silent:
+        print(f"[INFO ]Digest created at: {filename}")

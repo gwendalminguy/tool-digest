@@ -98,7 +98,7 @@ def cron(
         return
 
     tag = f"# digest:{NAME}"
-    command = f"0 {time} * * {day} {PYTHON_PATH} -m digest.cli run {NAME} {tag}"
+    command = f"0 {time} * * {day} {PYTHON_PATH} -m digest.cli run --silent {NAME} {tag}"
 
     # Retrieve all existing cronjobs.
     try:
@@ -169,7 +169,7 @@ def ls():
 
 @app.command()
 def rm(
-    name: str = typer.Argument(help="Name of the project to delete."),
+    name: str = typer.Argument(help="Name of the project to delete.")
 ):
     """
     Remove a project configuration and its associated cronjob if existing.
@@ -217,6 +217,7 @@ def rm(
 @app.command()
 def run(
     name: str = typer.Argument(help="Name of the project to run."),
+    silent: bool = typer.Option(False, "--silent", "-s", help="Run in silent mode.")
 ):
     """
     Launch manually the summarization of recent news for a project.
@@ -235,10 +236,10 @@ def run(
 
         feeds = get_feeds(OPML_URL)
         content = get_news(INTERVAL, feeds)
-        result = digest_news(INTERVAL, GEMINI_API_KEY, content)
+        result = digest_news(INTERVAL, GEMINI_API_KEY, content, silent)
 
         if result:
-            generate_markdown(TODAY, result)
+            generate_markdown(TODAY, result, silent)
 
     else:
         typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")

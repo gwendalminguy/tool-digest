@@ -6,7 +6,7 @@ Module containing core functions.
 from datetime import datetime, timedelta
 from google import genai
 from importlib import resources
-from time import sleep
+from time import sleep, time
 from xml.etree import ElementTree
 
 import feedparser
@@ -20,21 +20,31 @@ def get_feeds(OPML_URL: str) -> list:
     """
     Retrieve every RSS feed URL from an OPML URL.
     """
+    start = time()
     headers={
         "User-Agent": "Digest/0.1.0"
     }
 
-    response = requests.get(
-        OPML_URL,
-        headers=headers
-    )
-    response.raise_for_status()
+    # Fetch OPML.
+    try:
+        response = requests.get(
+            OPML_URL,
+            headers=headers,
+            timeout=10
+        )
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise RuntimeError(f"Failed to fetch OPML: {e}")
 
-    root = ElementTree.fromstring(response.content)
+    # Parse XML.
+    try:
+        root = ElementTree.fromstring(response.content)
+    except ElementTree.ParseError:
+        raise RuntimeError("Failed to parse XML.")
 
     feeds = []
 
-    # Retrieve the URL for each feed.
+    # Retrieve the RSS URL for each feed.
     for outline in root.iter('outline'):
         xml_url = outline.attrib.get('xmlUrl')
         title = outline.attrib.get('title')
@@ -45,39 +55,63 @@ def get_feeds(OPML_URL: str) -> list:
                 "url": xml_url
             })
 
+    if not feeds:
+        raise RuntimeError("No valid feed found in OPML.")
+
+    end = time()
+    length = round(end - start, 3)
+
+    # print(f"[LOG] OPML: {length}s")
+
     return feeds
 
 
-def get_news(INTERVAL: int, feeds: list) -> list:
+def get_news(INTERVAL: int, feeds: list, silent: bool) -> list:
     """
     Retrieve all articles from a list of RSS feed URLs for a given period of time.
     """
     NOW = datetime.now()
     WEEK = NOW - timedelta(days=INTERVAL)
 
-    contents = [feedparser.parse(element["url"]) for element in feeds]
+    start = time()
     news = []
 
-    # Filter entries for each feed by date.
-    for feed in contents:
+    for element in feeds:
+        url = element["url"]
+
+        feed = feedparser.parse(url)
+
+        # Handle and log parsing errors.
+        if feed.bozo:
+            if not silent:
+                print(f"[WARNING] Failed to parse feed: {url} ({feed.bozo_exception})")
+            continue
+
         for entry in feed.entries:
             if "published_parsed" in entry:
                 published = datetime(*entry.published_parsed[:6])
+
                 if published > WEEK:
                     news.append({
-                        "title": entry.title,
-                        "link": entry.link,
-                        "summary": entry.summary
+                        "title": getattr(entry, "title", "No Title"),
+                        "link": getattr(entry, "link", "No Link"),
+                        "summary": getattr(entry, "summary", "No Summary")
                     })
+
+    end = time()
+    length = round(end - start, 3)
+
+    # print(f"[LOG] RSS: {length}s")
 
     return news
 
 
-def digest_news(INTERVAL: int, LANGUAGE: str, API_KEY:str, content: list, silent: bool) -> str | None:
+def digest_news(INTERVAL: int, LANGUAGE: str, API_KEY:str, content: list, silent: bool) -> dict:
     """
     Summarize as a structured JSON a list of articles.
     """
-    client = genai.Client()
+    start = time()
+    client = genai.Client(api_key=API_KEY)
     success = False
     trial = 1
 
@@ -93,7 +127,7 @@ def digest_news(INTERVAL: int, LANGUAGE: str, API_KEY:str, content: list, silent
                     INSTRUCTIONS :
                     {instructions}
 
-                    CONTENU À ANALYSER :
+                    CONTENT :
                     {content}
                 """
             )
@@ -104,27 +138,41 @@ def digest_news(INTERVAL: int, LANGUAGE: str, API_KEY:str, content: list, silent
         except Exception as e:
             if not silent:
                 print(f"Error (Trial {trial}): {e}")
-            sleep(trial * 3)
+            sleep(2 ** trial)
             trial += 1
 
     if not success:
-        sys.exit("Error: AI Service Unavailable")
+        raise RuntimeError("AI Service Unavailable.")
+
+    if not response.candidates:
+        raise RuntimeError("Empty response from AI.")
 
     # Parse result.
-    parts = response.candidates[0].content.parts
+    parts = response.candidates[0].content.parts or []
     raw = "".join(part.text for part in parts if hasattr(part, "text"))
+
+    if not raw:
+        raise RuntimeError("Empty content returned by AI.")
+
+    raw = raw.strip()
+
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
 
     try:
         result = json.loads(raw)
     except json.JSONDecodeError:
-        if not silent:
-            print("Error: Invalid JSON")
-        return None
+        raise RuntimeError("Invalid JSON.")
+
+    end = time()
+    length = round(end - start, 3)
+
+    # print(f"[LOG] GEMINI: {length}s")
 
     return result
 
 
-def generate_markdown(TODAY: int, digest: str, silent: bool):
+def generate_markdown(TODAY: int, NEWS_PATH: str, digest: dict) -> str:
     """
     Transform a structured JSON into a readable markdown file.
     """
@@ -148,17 +196,11 @@ def generate_markdown(TODAY: int, digest: str, silent: bool):
             lines.append(f"- {highlight}")
 
     result = "\n".join(lines)
-
-    # Create directory if necessary.
-    base = os.path.dirname(os.path.realpath(__file__))
-    path = os.path.join(base, "news")
-    os.makedirs(path, exist_ok=True)
     
-    filename = f"{path}/{TODAY}.md"
+    filename = os.path.join(NEWS_PATH, f"{TODAY}.md")
 
     # Write digest to a file.
     with open(filename, "w", encoding="utf-8") as file:
         file.write(result)
 
-    if not silent:
-        print(f"[INFO] Digest created at: {filename}")
+    return filename

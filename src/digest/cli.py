@@ -182,7 +182,7 @@ def ls():
 @app.command()
 def rm(
     name: str = typer.Argument(help="Name of the project to delete."),
-    force: bool = typer.Option(False, "--force", "-f", help="")
+    force: bool = typer.Option(False, "--force", "-f", help="No confirmation prompt before deletion.")
 ):
     """
     Remove a project configuration and its associated cronjob if existing.
@@ -240,24 +240,39 @@ def run(
     DIGEST_DIR = os.path.expanduser("~/.digest")
     CONFIG_PATH = os.path.join(DIGEST_DIR, f"config.{NAME}.env")
 
-    if os.path.isdir(DIGEST_DIR) and os.path.exists(CONFIG_PATH):
-        load_dotenv(CONFIG_PATH)
+    if not os.path.exists(CONFIG_PATH):
+        if not silent:
+            typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
+        return
 
-        TODAY = datetime.now().strftime('%Y-%m-%d')
-        INTERVAL = int(os.getenv("INTERVAL")) # In days.
-        OPML_URL = os.getenv("OPML_URL")
-        GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-        LANGUAGE = os.getenv("LANGUAGE")
+    # Load configuration file.
+    load_dotenv(CONFIG_PATH, override=False)
 
+    TODAY = datetime.now().strftime('%Y-%m-%d')
+    INTERVAL = int(os.getenv("INTERVAL", "7")) # In days.
+    OPML_URL = os.getenv("OPML_URL")
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    NEWS_PATH = os.getenv("NEWS_PATH")
+    LANGUAGE = os.getenv("LANGUAGE", "en")
+
+    if not OPML_URL or not GEMINI_API_KEY or not NEWS_PATH:
+        if not silent:
+            typer.echo("[ERROR] Missing required configuration.")
+        return
+
+    try:
         feeds = get_feeds(OPML_URL)
-        content = get_news(INTERVAL, feeds)
+        content = get_news(INTERVAL, feeds, silent)
         result = digest_news(INTERVAL, LANGUAGE, GEMINI_API_KEY, content, silent)
+    except RuntimeError as e:
+        if not silent:
+            typer.echo(f"[ERROR] {e}")
+        return
 
-        if result:
-            generate_markdown(TODAY, result, silent)
-
-    else:
-        typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
+    if result:
+        filename = generate_markdown(TODAY, NEWS_PATH, result)
+        if not silent:
+            typer.echo(f"[INFO] Digest generated successfully at: {filename}")
 
 
 if __name__ == "__main__":

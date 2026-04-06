@@ -5,6 +5,7 @@ Module containing core functions.
 """
 from datetime import datetime, timedelta
 from google import genai
+from importlib import resources
 from time import sleep
 from xml.etree import ElementTree
 
@@ -81,8 +82,8 @@ def digest_news(INTERVAL: int, LANGUAGE: str, API_KEY:str, content: list, silent
     trial = 1
 
     # Get instructions from markdown file.
-    with open(f"../instructions_{LANGUAGE}.md", "r", encoding="utf-8") as file:
-        instructions = file.read()
+    filename = f"instructions_{LANGUAGE}.md"
+    instructions = resources.files("digest.prompts").joinpath(filename).read_text()
 
     while trial <= 5:
         try:

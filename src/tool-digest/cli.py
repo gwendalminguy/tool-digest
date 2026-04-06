@@ -244,10 +244,11 @@ def run(
         INTERVAL = int(os.getenv("INTERVAL")) # In days.
         OPML_URL = os.getenv("OPML_URL")
         GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+        LANGUAGE = os.getenv("LANGUAGE")
 
         feeds = get_feeds(OPML_URL)
         content = get_news(INTERVAL, feeds)
-        result = digest_news(INTERVAL, LANUAGE, GEMINI_API_KEY, content, silent)
+        result = digest_news(INTERVAL, LANGUAGE, GEMINI_API_KEY, content, silent)
 
         if result:
             generate_markdown(TODAY, result, silent)

@@ -2,7 +2,7 @@
 cli.py
 Module containing command-line interface functions.
 """
-from core import get_feeds, get_news, digest_news, generate_markdown
+from digest.core import get_feeds, get_news, digest_news, generate_markdown
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 

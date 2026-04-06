@@ -102,14 +102,14 @@ def cron(
         typer.echo("[ERROR] Invalid day.")
         raise typer.Exit(code=1)
 
-    day = DAYS[day]
+    DAY = DAYS[day]
 
     if not os.path.exists(CONFIG_PATH):
         typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
         return
 
     tag = f"# digest:{NAME}"
-    command = f"0 {time} * * {day} {PYTHON_PATH} -m digest.cli run --silent {NAME} {tag}"
+    command = f"0 {time} * * {DAY} {PYTHON_PATH} -m digest.cli run --silent {NAME} {tag}"
 
     # Retrieve all existing cronjobs.
     try:
@@ -130,7 +130,7 @@ def cron(
     crontab.append(f"{command}")
     new = "\n".join(crontab) + "\n"
     subprocess.run(["crontab", "-"], input=new, text=True)
-    typer.echo(f"[INFO] Cronjob added successfully for {NAME}.")
+    typer.echo(f"[INFO] Cronjob successfully added for {NAME}. Digest will run every {day.capitalize()} at {time}:00.")
 
 
 @app.command()

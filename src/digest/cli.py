@@ -26,13 +26,14 @@ DAYS = {
 }
 
 LANGUAGES = [
+    "en",
     "fr"
 ]
 
 @app.command()
 def init(
     name: str = typer.Argument(help="Name of the project to configure."),
-    language: str = typer.Option("fr", "--language", "-l", help="Language of the news.", min=0, max=23),
+    language: str = typer.Option("en", "--language", "-l", help="Language of the news.", min=0, max=23),
     opml_url: str = typer.Option(prompt=True, help="OPML URL of the group of RSS feeds to use."),
     gemini_api_key: str = typer.Option(prompt=True, hide_input=True, help="Gemini API key to use.")
 ):

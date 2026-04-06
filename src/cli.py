@@ -25,9 +25,14 @@ DAYS = {
     "saturday": 6,
 }
 
+LANGUAGES = [
+    "fr"
+]
+
 @app.command()
 def init(
     name: str = typer.Argument(help="Name of the project to configure."),
+    language: str = typer.Option("fr", "--language", "-l", help="Language of the news.", min=0, max=23),
     opml_url: str = typer.Option(prompt=True, help="OPML URL of the group of RSS feeds to use."),
     gemini_api_key: str = typer.Option(prompt=True, hide_input=True, help="Gemini API key to use.")
 ):
@@ -40,6 +45,11 @@ def init(
     GEMINI_API_KEY = gemini_api_key.strip()
     NEWS_DIR = os.path.join(os.getcwd(), "news")
     INTERVAL = 7 # In days.
+    LANGUAGE = language.lower()
+
+    if LANGUAGE not in LANGUAGES:
+        typer.echo("[ERROR] Invalid language.")
+        raise typer.Exit(code=1)
 
     # Create necessary directories.
     os.makedirs(DIGEST_DIR, exist_ok=True)
@@ -52,7 +62,8 @@ def init(
         f"OPML_URL={OPML_URL}",
         f"GEMINI_API_KEY={GEMINI_API_KEY}",
         f"NEWS_PATH={NEWS_DIR}",
-        f"INTERVAL={INTERVAL}"
+        f"INTERVAL={INTERVAL}",
+        f"LANGUAGE={LANGUAGE}"
     ]
 
     # Confirm if configuration already exists.
@@ -74,8 +85,8 @@ def init(
 @app.command()
 def cron(
     name: str = typer.Argument(help="Name of the project to create a cronjob for."),
-    time: int = typer.Option(9, "--time", "-t", help="Hour of the day", min=0, max=23),
-    day: str = typer.Option("sunday", "--day", "-d", help="Day of the week")
+    time: int = typer.Option(9, "--time", "-t", help="Hour of the day.", min=0, max=23),
+    day: str = typer.Option("sunday", "--day", "-d", help="Day of the week.")
 ):
     """
     Create a cronjob to run Digest every week for the specified project.
@@ -236,7 +247,7 @@ def run(
 
         feeds = get_feeds(OPML_URL)
         content = get_news(INTERVAL, feeds)
-        result = digest_news(INTERVAL, GEMINI_API_KEY, content, silent)
+        result = digest_news(INTERVAL, LANUAGE, GEMINI_API_KEY, content, silent)
 
         if result:
             generate_markdown(TODAY, result, silent)

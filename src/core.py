@@ -72,7 +72,7 @@ def get_news(INTERVAL: int, feeds: list) -> list:
     return news
 
 
-def digest_news(INTERVAL: int, API_KEY:str, content: list, silent: bool) -> str | None:
+def digest_news(INTERVAL: int, LANGUAGE: str, API_KEY:str, content: list, silent: bool) -> str | None:
     """
     Summarize as a structured JSON a list of articles.
     """
@@ -81,7 +81,7 @@ def digest_news(INTERVAL: int, API_KEY:str, content: list, silent: bool) -> str 
     trial = 1
 
     # Get instructions from markdown file.
-    with open("../instructions.md", "r", encoding="utf-8") as file:
+    with open(f"../instructions_{LANGUAGE}.md", "r", encoding="utf-8") as file:
         instructions = file.read()
 
     while trial <= 5:

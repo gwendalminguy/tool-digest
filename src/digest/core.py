@@ -161,4 +161,4 @@ def generate_markdown(TODAY: int, digest: str, silent: bool):
         file.write(result)
 
     if not silent:
-        print(f"[INFO ]Digest created at: {filename}")
+        print(f"[INFO] Digest created at: {filename}")

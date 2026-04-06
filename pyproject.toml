@@ -1,0 +1,38 @@
+[project]
+name = "tool-digest"
+version = "0.1.0"
+authors = [
+    { name="Gwendal Minguy-Pèlerin", email="gwendalminguy@outlook.fr" }
+]
+description = "Technical watch summarization tool."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+license = "MIT"
+license = { file="LICENSE" }
+dependencies = [
+    "feedparser>=6.0.12,<7.0.0",
+    "google-genai>=1.70.0,<2.0.0",
+    "python-dotenv>=1.2.2,<2.0.0",
+    "requests>=2.33.1,<3.0.0",
+    "typer>=0.24.1,<1.0.0"
+]
+keywords = ["cli", "devtools", "summarization", "feed", "rss", "ai", "productivity"]
+
+[project.scripts]
+digest = "digest.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/gwendalminguy/tool-digest"
+Repository = "https://github.com/gwendalminguy/tool-digest"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+digest = ["prompts/instructions_*.md"]

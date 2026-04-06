@@ -6,6 +6,15 @@ Digest is a simple tool to summarize a group of RSS feeds as a single markdown f
 
 Digest helps easily keep up with many news source feeds and summarize them. Those summarized news are saved in markdown format in the `news/` directory (automatically created if not existing). The aim of this project is to provide an easy way to automatically produce a weekly news digest from a group of RSS feeds.
 
+## 🔄 Flow Logic
+
+On launch, Digest works as follow:
+
+1. Fetch RSS feeds from the provided OPML URL
+2. Filter recent articles (seven last days)
+3. Send them to Gemini for summarization
+4. Generate a structured markdown file
+
 ## 📂 Project Structure
 
 The project contains several files and directories, which are the following:
@@ -13,8 +22,9 @@ The project contains several files and directories, which are the following:
 | Files | Description |
 | :---- | :---------- |
 | [`src/digest/cli.py`](https://github.com/gwendalminguy/tool-digest/blob/main/src/digest/cli.py) | The python module containing command-line interface functions. |
-| [`src/digest/core.py`](https://github.com/gwendalminguy/tool-digest/blob/main/src/digest/cli.py) | The python module containing core functions. |
-| [`src/digest/prompts/instructions_*.md`](https://github.com/gwendalminguy/tool-digest/blob/main/src/digest/prompts/instructions.md) | The markdown files containing AI instructions to produce a structured JSON output. |
+| [`src/digest/core.py`](https://github.com/gwendalminguy/tool-digest/blob/main/src/digest/core.py) | The python module containing core functions. |
+| [`src/digest/prompts/`](https://github.com/gwendalminguy/tool-digest/blob/main/src/digest/prompts/) | The directory containing markdown files with AI instructions to produce a structured JSON output. |
+| [`LICENSE`](https://github.com/gwendalminguy/tool-digest/blob/main/LICENSE) | The license file. |
 | [`pyproject.toml`](https://github.com/gwendalminguy/tool-digest/blob/main/pyproject.toml) | The text file containing requirements to install. |
 | [`requirements.txt`](https://github.com/gwendalminguy/tool-digest/blob/main/requirements.txt) | The text file containing requirements to install. |
 
@@ -26,7 +36,7 @@ Before installing Digest, make sure all of the following prerequisites are met:
 
 In order to schedule Digest so that it can run automatically, `crontab` is required. On Debian/Ubuntu, it can be installed as follows:
 
-```
+```bash
 $ sudo apt install cron
 ```
 
@@ -40,10 +50,37 @@ The news summarization is achieved by making an external call to **Gemini 3 Flas
 
 ## ⚙️ Installation
 
-...
+It is recommended to create a virtual environment before installing Digest:
 
-The summarized news will be saved weekly as a markdown file in the `news/` directory. The user might be prompted by the system to authorize the automations, to allow the script execution.
+```bash
+$ python3 -m venv venv
+$ source venv/bin/activate
+$ pip install tool-digest
+```
+
+## 🔨 Configuration
+
+To initialize a new Digest, run:
+
+```bash
+$ digest init <name> [--language en]                    # Initialize a new Digest with a name.
+```
+
+During initialization, the user will be prompted for:
+
+- an OPML URL (RSS feeds source)
+- a Gemini API Key
+
+On initialization of a new Digest, a configuration is created at `~/.digest/config.<name>.env`, and a `news/` directory is created, in which the summarized news will be saved as a markdown file.
 
 ## 🖥️ Usage
 
-...
+```bash
+$ digest run <name> [--silent]                          # Run Digest to summarize a group of RSS feeds.
+$ digest cron <name> [--day monday --time 9]            # Schedule a cronjob to run a Digest automatically every week.
+$ digest rm <name> [--force]                            # Remove a Digest by deleting its configuration file and its cronjob if it exists.
+$ digest ls                                             # List each configured Digest and its news/ output path.
+
+$ digest --help                                         # Show help with description for available commands.
+$ digest <command> --help                               # Show help with arguments/options description for the specified command.
+```

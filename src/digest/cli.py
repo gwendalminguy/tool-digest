@@ -181,7 +181,8 @@ def ls():
 
 @app.command()
 def rm(
-    name: str = typer.Argument(help="Name of the project to delete.")
+    name: str = typer.Argument(help="Name of the project to delete."),
+    force: bool = typer.Option(False, "--force", "-f", help="")
 ):
     """
     Remove a project configuration and its associated cronjob if existing.
@@ -196,9 +197,10 @@ def rm(
         return
 
     # Confirm removal.
-    if not typer.confirm(f"[WARNING] Remove {NAME}?"):
-        typer.echo("[INFO] Deletion cancelled.")
-        raise typer.Abort()
+    if not force:
+        if not typer.confirm(f"[WARNING] Remove {NAME}?"):
+            typer.echo("[INFO] Deletion cancelled.")
+            raise typer.Abort()
 
     # Remove configuration file.
     os.remove(CONFIG_PATH)

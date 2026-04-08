@@ -76,7 +76,7 @@ On initialization of a new Digest, a configuration is created at `~/.digest/conf
 To configure this Digest to launch weekly, run:
 
 ```bash
-$ digest cron <name>    [--day monday --time 9]         # Schedule a cronjob to run a Digest automatically every week.
+$ digest cron <name>    [--day monday --hour 9]         # Schedule a cronjob to run a Digest automatically every week.
 ```
 
 Even if a cronjob has been set, the virtual environment can be still be deactivated once Digest has been configured, it will still run automatically as expected. Do not delete the virtual environment though, or the cronjob will fail. If you want to delete the virtual environment, make sure you remove any Digest-related cronjob before.

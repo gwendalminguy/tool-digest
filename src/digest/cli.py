@@ -25,6 +25,10 @@ DAYS = {
     "saturday": 6,
 }
 
+DAYS_REVERSE =  {
+    str(value): key for key, value in DAYS.items()
+}
+
 LANGUAGES = [
     "en",
     "fr"
@@ -86,7 +90,7 @@ def init(
 @app.command()
 def cron(
     name: str = typer.Argument(help="Name of the project to create a cronjob for."),
-    time: int = typer.Option(9, "--time", "-t", help="Hour of the day.", min=0, max=23),
+    hour: int = typer.Option(9, "--hour", "-H", help="Hour of the day.", min=0, max=23),
     day: str = typer.Option("sunday", "--day", "-d", help="Day of the week.")
 ):
     """
@@ -110,7 +114,7 @@ def cron(
         return
 
     tag = f"# digest:{NAME}"
-    command = f"0 {time} * * {DAY} {PYTHON_PATH} -m digest.cli run --silent {NAME} {tag}"
+    command = f"0 {hour} * * {DAY} {PYTHON_PATH} -m digest.cli run --silent {NAME} {tag}"
 
     # Retrieve all existing cronjobs.
     try:
@@ -131,7 +135,7 @@ def cron(
     crontab.append(f"{command}")
     new = "\n".join(crontab) + "\n"
     subprocess.run(["crontab", "-"], input=new, text=True)
-    typer.echo(f"[INFO] Cronjob successfully added for {NAME}. Digest will run every {day.capitalize()} at {time}:00.")
+    typer.echo(f"[INFO] Cronjob successfully added for {NAME}. Digest will run every {day.capitalize()} at {hour}:00.")
 
 
 @app.command()
@@ -150,33 +154,55 @@ def ls():
             if filename.startswith("config.") and filename.endswith(".env")
         ]
 
-    # Get name and news directory for each project.
-    if files:
-        for file_path in files:
-            name = ""
-            news_path = ""
-
-            with open(file_path, "r", encoding="utf-8") as file:
-                for line in file:
-                    line = line.strip()
-                    key, _, value = line.partition("=")
-
-                    if key == "NAME":
-                        name = value
-                    elif key == "NEWS_PATH":
-                        news_path = value
-
-                content.append({
-                    "Name": name,
-                    "News": news_path
-                })
-
-        # Print name and news directory for each project.
-        for project in content:
-            typer.echo(f"- {project['Name']:<15} {project['News']}")
-
-    else:
+    if not files:
         typer.echo("[INFO] No project found. Run [digest init <name>] to initialize a new project.")
+        return
+
+    # Retrieve cronjobs.
+    try:
+        result = subprocess.run(["crontab", "-l"], capture_output=True, text=True)
+        current = result.stdout if result.returncode == 0 else ""
+        crontab = current.splitlines()
+    except FileNotFoundError as e:
+        pass
+
+    # Get name and news directory for each project.
+    for file_path in files:
+        name = ""
+        news_path = ""
+
+        with open(file_path, "r", encoding="utf-8") as file:
+            for line in file:
+                line = line.strip()
+                key, _, value = line.partition("=")
+
+                if key == "NAME":
+                    name = value
+                elif key == "NEWS_PATH":
+                    news_path = value
+
+            cronjob = "No Cronjob"
+
+            # Get cronjob if one is configured.
+            if crontab:
+                tag = f"# digest:{name.lower()}"
+                for line in crontab:
+                    if line.strip().endswith(tag):
+                        moment = line.split(" ")[:5]
+                        hour = f"{moment[1]}:00"
+                        day = DAYS_REVERSE[moment[4]].capitalize() if moment[4] in DAYS_REVERSE.keys() else "Unknown"
+                        cronjob = f"Cronjob at {hour} every {day}"
+                        break
+
+            content.append({
+                "name": name,
+                "news": news_path,
+                "cronjob": cronjob
+            })
+
+    # Print name and news directory for each project.
+    for project in content:
+        typer.echo(f"- {project["name"]:<15} {project["news"]:<50} ({project["cronjob"]})")
 
 
 @app.command()

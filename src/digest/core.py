@@ -3,7 +3,7 @@
 core.py
 Module containing core functions.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from google import genai
 from importlib import resources
 from time import sleep, time
@@ -62,7 +62,7 @@ def get_feeds(OPML_URL: str) -> list:
     end = time()
     length = round(end - start, 3)
 
-    print(f"[LOG] OPML: {length}s")
+    # print(f"[LOG] OPML: {length}s")
 
     return feeds
 
@@ -71,7 +71,7 @@ def get_news(INTERVAL: int, feeds: list, silent: bool) -> list:
     """
     Retrieve all articles from a list of RSS feed URLs for a given period of time.
     """
-    NOW = datetime.now()
+    NOW = datetime.now(timezone.utc)
     WEEK = NOW - timedelta(days=INTERVAL)
 
     start = time()
@@ -90,28 +90,34 @@ def get_news(INTERVAL: int, feeds: list, silent: bool) -> list:
             continue
 
         for entry in feed.entries:
-            if "published_parsed" in entry:
-                published = datetime(*entry.published_parsed[:6])
+            published = getattr(entry, "published_parsed", None) or getattr(entry, "updated_parsed", None)
 
-                if published > WEEK:
-                    summary = getattr(entry, "summary", "No Summary")
-                    clean = re.sub(r"</?\w+[^>]*>", "", summary)
+            # Skip if no date found.
+            if not published:
+                continue
 
-                    news.append({
-                        "category": category,
-                        "title": getattr(entry, "title", "No Title"),
-                        "link": getattr(entry, "link", "No Link"),
-                        "summary": clean
-                    })
+            # Respect timezone.
+            published = datetime(*published[:6], tzinfo=timezone.utc)
+
+            if published > WEEK:
+                summary = getattr(entry, "summary", "No Summary")
+                clean = re.sub(r"</?\w+[^>]*>", "", summary)
+
+                news.append({
+                    "category": category,
+                    "title": getattr(entry, "title", "No Title"),
+                    "link": getattr(entry, "link", "No Link"),
+                    "summary": clean
+                })
 
     # Dump result as JSON.
-    # with open("articles.json", "w", encoding="utf-8") as file:
+    # with open("news.json", "w", encoding="utf-8") as file:
         # json.dump(news, file, indent=4, ensure_ascii=False)
 
     end = time()
     length = round(end - start, 3)
 
-    print(f"[LOG] RSS: {length}s")
+    # print(f"[LOG] RSS: {length}s")
 
     return news
 
@@ -181,7 +187,7 @@ def digest_news(INTERVAL: int, LANGUAGE: str, API_KEY:str, content: list, silent
     end = time()
     length = round(end - start, 3)
 
-    print(f"[LOG] GEMINI: {length}s")
+    # print(f"[LOG] GEMINI: {length}s")
 
     return result
 

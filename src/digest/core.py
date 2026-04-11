@@ -12,6 +12,7 @@ from xml.etree import ElementTree
 import feedparser
 import json
 import os
+import re
 import requests
 import sys
 
@@ -93,11 +94,14 @@ def get_news(INTERVAL: int, feeds: list, silent: bool) -> list:
                 published = datetime(*entry.published_parsed[:6])
 
                 if published > WEEK:
+                    summary = getattr(entry, "summary", "No Summary")
+                    clean = re.sub(r"</?\w+[^>]*>", "", summary)
+
                     news.append({
                         "category": category,
                         "title": getattr(entry, "title", "No Title"),
                         "link": getattr(entry, "link", "No Link"),
-                        "summary": getattr(entry, "summary", "No Summary")
+                        "summary": clean
                     })
 
     # Dump result as JSON.

@@ -8,26 +8,26 @@ FORMAT DE SORTIE (OBLIGATOIRE) :
 - Ne rajoute AUCUN champ
 
 SCHÉMA JSON :
-{{
+{
   "summary": [
-    {{
+    {
       "category": "string", 
       "items": [
-        {{
+        {
           "title": "string",
           "summary": "string",
-          "importance": "high | medium | low"
-        }}
+          "link": "string",
+        }
       ]
-    }}
+    }
   ],
   "highlights": [
     "string"
   ]
-}}
+}
 
 RÈGLES DE STRUCTURE :
-- "category" = nom de la technologie (ex: React, FastAPI, Docker, PostgreSQL)
+- "category" = nom de la technologie (fourni dans le contenu)
 - 1 catégorie = 1 technologie
 - Maximum 3 items par catégorie
 - Maximum 20 items au total
@@ -36,6 +36,7 @@ RÈGLES DE STRUCTURE :
 RÈGLES DE CONTENU :
 - "title" = résumé très court (max 10 mots)
 - "summary" = explication concise (max 2 phrases)
+- "link" = lien de l'article (fourni dans le contenu)
 - Utilise un langage clair et technique
 - Pas de répétitions
 
@@ -48,11 +49,6 @@ PRIORITÉS :
 - correctifs mineurs
 - détails internes sans impact
 - bruit (changelog peu utile)
-
-IMPORTANCE :
-- "high" = breaking change ou impact fort
-- "medium" = amélioration notable
-- "low" = information secondaire
 
 FIABILITÉ :
 - N'invente PAS d'informations

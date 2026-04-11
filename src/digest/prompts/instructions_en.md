@@ -16,7 +16,7 @@ JSON SCHEMA:
         {
           "title": "string",
           "summary": "string",
-          "importance": "high | medium | low"
+          "link": "string",
         }
       ]
     }
@@ -27,7 +27,7 @@ JSON SCHEMA:
 }
 
 STRUCTURE RULES:
-- "category" = technology name (e.g., React, FastAPI, Docker, PostgreSQL)
+- "category" = technology name (included in content)
 - 1 category = 1 technology
 - Maximum 3 items per category
 - Maximum 20 items total
@@ -36,6 +36,7 @@ STRUCTURE RULES:
 CONTENT RULES:
 - "title" = very short summary (max 10 words)
 - "summary" = concise explanation (max 2 sentences)
+- "link" = link of the article (included in content)
 - Use clear, technical language
 - No repetitions
 
@@ -48,11 +49,6 @@ TO IGNORE:
 - minor fixes
 - internal details without impact
 - noise (unhelpful changelog entries)
-
-IMPORTANCE:
-- "high" = breaking change or strong impact
-- "medium" = notable improvement
-- "low" = secondary information
 
 RELIABILITY:
 - Do NOT make up information

@@ -61,7 +61,7 @@ def get_feeds(OPML_URL: str) -> list:
     end = time()
     length = round(end - start, 3)
 
-    # print(f"[LOG] OPML: {length}s")
+    print(f"[LOG] OPML: {length}s")
 
     return feeds
 
@@ -77,6 +77,7 @@ def get_news(INTERVAL: int, feeds: list, silent: bool) -> list:
     news = []
 
     for element in feeds:
+        category = element["title"]
         url = element["url"]
 
         feed = feedparser.parse(url)
@@ -93,15 +94,20 @@ def get_news(INTERVAL: int, feeds: list, silent: bool) -> list:
 
                 if published > WEEK:
                     news.append({
+                        "category": category,
                         "title": getattr(entry, "title", "No Title"),
                         "link": getattr(entry, "link", "No Link"),
                         "summary": getattr(entry, "summary", "No Summary")
                     })
 
+    # Dump result as JSON.
+    with open("articles.json", "w", encoding="utf-8") as file:
+        json.dump(news, file, indent=4, ensure_ascii=False)
+
     end = time()
     length = round(end - start, 3)
 
-    # print(f"[LOG] RSS: {length}s")
+    print(f"[LOG] RSS: {length}s")
 
     return news
 
@@ -164,10 +170,14 @@ def digest_news(INTERVAL: int, LANGUAGE: str, API_KEY:str, content: list, silent
     except json.JSONDecodeError:
         raise RuntimeError("Invalid JSON.")
 
+    # Dump result as JSON.
+    with open("digest.json", "w", encoding="utf-8") as file:
+        json.dump(result, file, indent=4, ensure_ascii=False)
+
     end = time()
     length = round(end - start, 3)
 
-    # print(f"[LOG] GEMINI: {length}s")
+    print(f"[LOG] GEMINI: {length}s")
 
     return result
 
@@ -185,7 +195,7 @@ def generate_markdown(TODAY: int, NEWS_PATH: str, digest: dict) -> str:
         lines.append(f"## {section['category']}\n")
 
         for item in section["items"]:
-            lines.append(f"- **{item['title']}**: {item['summary']}")
+            lines.append(f"- **[{item['title']}]({item['link']})**: {item['summary']}")
 
         lines.append("")
 

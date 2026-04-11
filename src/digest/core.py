@@ -101,8 +101,8 @@ def get_news(INTERVAL: int, feeds: list, silent: bool) -> list:
                     })
 
     # Dump result as JSON.
-    with open("articles.json", "w", encoding="utf-8") as file:
-        json.dump(news, file, indent=4, ensure_ascii=False)
+    # with open("articles.json", "w", encoding="utf-8") as file:
+        # json.dump(news, file, indent=4, ensure_ascii=False)
 
     end = time()
     length = round(end - start, 3)
@@ -171,8 +171,8 @@ def digest_news(INTERVAL: int, LANGUAGE: str, API_KEY:str, content: list, silent
         raise RuntimeError("Invalid JSON.")
 
     # Dump result as JSON.
-    with open("digest.json", "w", encoding="utf-8") as file:
-        json.dump(result, file, indent=4, ensure_ascii=False)
+    # with open("digest.json", "w", encoding="utf-8") as file:
+        # json.dump(result, file, indent=4, ensure_ascii=False)
 
     end = time()
     length = round(end - start, 3)
@@ -190,20 +190,23 @@ def generate_markdown(TODAY: int, NEWS_PATH: str, digest: dict) -> str:
 
     lines.append(f"# Weekly News: {TODAY}\n")
 
-    # Build each section.
-    for section in digest["summary"]:
-        lines.append(f"## {section['category']}\n")
-
-        for item in section["items"]:
-            lines.append(f"- **[{item['title']}]({item['link']})**: {item['summary']}")
-
-        lines.append("")
-
     # Create highlights section.
     if digest.get("highlights"):
         lines.append("## Highlights\n")
         for highlight in digest["highlights"]:
             lines.append(f"- {highlight}")
+
+        lines.append("")
+
+    # Create details section and build each category.
+    lines.append("## Details\n")
+    for section in digest["summary"]:
+        lines.append(f"### {section['category']}\n")
+
+        for item in section["items"]:
+            lines.append(f"- **[{item['title']}]({item['link']})**: {item['summary']}")
+
+        lines.append("")
 
     result = "\n".join(lines)
     

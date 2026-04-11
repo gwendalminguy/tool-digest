@@ -30,8 +30,8 @@ STRUCTURE RULES:
 - "category" = technology name (included in content)
 - 1 category = 1 technology
 - Maximum 3 items per category
-- Maximum 20 items total
-- "highlights" = 3 to 5 key global points
+- Maximum 25 items total
+- "highlights" = 3 to 8 key global points
 
 CONTENT RULES:
 - "title" = very short summary (max 10 words)

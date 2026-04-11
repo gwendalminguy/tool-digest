@@ -30,8 +30,8 @@ RÈGLES DE STRUCTURE :
 - "category" = nom de la technologie (fourni dans le contenu)
 - 1 catégorie = 1 technologie
 - Maximum 3 items par catégorie
-- Maximum 20 items au total
-- "highlights" = 3 à 5 points clés globaux
+- Maximum 25 items au total
+- "highlights" = 3 à 8 points clés globaux
 
 RÈGLES DE CONTENU :
 - "title" = résumé très court (max 10 mots)

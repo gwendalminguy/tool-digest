@@ -35,7 +35,7 @@ STRUCTURE RULES:
 
 CONTENT RULES:
 - "title" = very short summary (max 10 words)
-- "summary" = concise explanation (max 2 sentences)
+- "summary" = concise explanation (max 3 sentences)
 - "link" = link of the article (included in content)
 - Use clear, technical language
 - No repetitions

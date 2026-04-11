@@ -35,7 +35,7 @@ RÈGLES DE STRUCTURE :
 
 RÈGLES DE CONTENU :
 - "title" = résumé très court (max 10 mots)
-- "summary" = explication concise (max 2 phrases)
+- "summary" = explication concise (max 3 phrases)
 - "link" = lien de l'article (fourni dans le contenu)
 - Utilise un langage clair et technique
 - Pas de répétitions

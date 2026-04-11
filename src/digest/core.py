@@ -211,10 +211,10 @@ def generate_markdown(TODAY: int, NEWS_PATH: str, digest: dict) -> str:
     # Create details section and build each category.
     lines.append("## Details\n")
     for section in digest["summary"]:
-        lines.append(f"### {section['category']}\n")
+        lines.append(f"- ### {section['category']}\n")
 
         for item in section["items"]:
-            lines.append(f"- **[{item['title']}]({item['link']})**: {item['summary']}")
+            lines.append(f"  - **[{item['title']}]({item['link']})**: {item['summary']}")
 
         lines.append("")
 

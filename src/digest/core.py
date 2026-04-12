@@ -189,7 +189,7 @@ def digest_news(LANGUAGE: str, API_KEY:str, content: list, silent: bool) -> dict
     return result
 
 
-def generate_markdown(DATES: tuple, NEWS_PATH: str, digest: dict) -> str:
+def generate_markdown(DATES: tuple, NEWS_PATH: str, digest: dict, length: tuple) -> str:
     """
     Transform a structured JSON into a readable markdown file.
     """
@@ -200,7 +200,7 @@ def generate_markdown(DATES: tuple, NEWS_PATH: str, digest: dict) -> str:
 
     lines.append(f"# Digest - {TODAY}\n")
     lines.append(f"**Period:** {PERIOD[0]} • {PERIOD[1]} \\")
-    lines.append(f"**Source:** X articles from Y feeds.\n")
+    lines.append(f"**Source:** {length[0]} articles from {length[1]} feeds.\n")
 
     # Create highlights section.
     if digest.get("highlights"):

@@ -296,8 +296,10 @@ def run(
             typer.echo(f"[ERROR] {e}")
         return
 
+    length = (len(content), len(feeds))
+
     if result:
-        filename = generate_markdown(DATES, NEWS_PATH, result)
+        filename = generate_markdown(DATES, NEWS_PATH, result, length)
         if not silent:
             typer.echo(f"[INFO] Digest generated successfully at: {filename}")
 

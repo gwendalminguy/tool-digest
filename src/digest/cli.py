@@ -3,7 +3,7 @@ cli.py
 Module containing command-line interface functions.
 """
 from digest.core import get_feeds, get_news, digest_news, generate_markdown
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 
 import os
@@ -274,8 +274,9 @@ def run(
     # Load configuration file.
     load_dotenv(CONFIG_PATH, override=False)
 
-    TODAY = datetime.now().strftime('%Y-%m-%d')
+    NOW = datetime.now(timezone.utc)
     INTERVAL = int(os.getenv("INTERVAL", "7")) # In days.
+    DATES = (NOW - timedelta(days=INTERVAL), NOW)
     OPML_URL = os.getenv("OPML_URL")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     NEWS_PATH = os.getenv("NEWS_PATH")
@@ -288,15 +289,15 @@ def run(
 
     try:
         feeds = get_feeds(OPML_URL)
-        content = get_news(INTERVAL, feeds, silent)
-        result = digest_news(INTERVAL, LANGUAGE, GEMINI_API_KEY, content, silent)
+        content = get_news(DATES, feeds, silent)
+        result = digest_news(LANGUAGE, GEMINI_API_KEY, content, silent)
     except RuntimeError as e:
         if not silent:
             typer.echo(f"[ERROR] {e}")
         return
 
     if result:
-        filename = generate_markdown(TODAY, NEWS_PATH, result)
+        filename = generate_markdown(DATES, NEWS_PATH, result)
         if not silent:
             typer.echo(f"[INFO] Digest generated successfully at: {filename}")
 

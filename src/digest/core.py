@@ -67,13 +67,10 @@ def get_feeds(OPML_URL: str) -> list:
     return feeds
 
 
-def get_news(INTERVAL: int, feeds: list, silent: bool) -> list:
+def get_news(DATES: tuple, feeds: list, silent: bool) -> list:
     """
     Retrieve all articles from a list of RSS feed URLs for a given period of time.
     """
-    NOW = datetime.now(timezone.utc)
-    WEEK = NOW - timedelta(days=INTERVAL)
-
     start = time()
     news = []
 
@@ -99,7 +96,7 @@ def get_news(INTERVAL: int, feeds: list, silent: bool) -> list:
             # Respect timezone.
             published = datetime(*published[:6], tzinfo=timezone.utc)
 
-            if published > WEEK:
+            if published > DATES[0]:
                 summary = getattr(entry, "summary", "No Summary")
                 clean = re.sub(r"</?\w+[^>]*>", "", summary)
 
@@ -122,7 +119,7 @@ def get_news(INTERVAL: int, feeds: list, silent: bool) -> list:
     return news
 
 
-def digest_news(INTERVAL: int, LANGUAGE: str, API_KEY:str, content: list, silent: bool) -> dict:
+def digest_news(LANGUAGE: str, API_KEY:str, content: list, silent: bool) -> dict:
     """
     Summarize as a structured JSON a list of articles.
     """
@@ -192,10 +189,12 @@ def digest_news(INTERVAL: int, LANGUAGE: str, API_KEY:str, content: list, silent
     return result
 
 
-def generate_markdown(TODAY: int, NEWS_PATH: str, digest: dict) -> str:
+def generate_markdown(DATES: tuple, NEWS_PATH: str, digest: dict) -> str:
     """
     Transform a structured JSON into a readable markdown file.
     """
+    TODAY = DATES[1].strftime('%Y-%m-%d')
+
     lines = []
 
     lines.append(f"# Weekly News: {TODAY}\n")

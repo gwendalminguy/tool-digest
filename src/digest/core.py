@@ -193,11 +193,14 @@ def generate_markdown(DATES: tuple, NEWS_PATH: str, digest: dict) -> str:
     """
     Transform a structured JSON into a readable markdown file.
     """
-    TODAY = DATES[1].strftime('%Y-%m-%d')
+    TODAY = DATES[1].strftime('%d %B %Y')
+    PERIOD = (DATES[0].strftime('%Y-%m-%d'), DATES[1].strftime('%Y-%m-%d'))
 
     lines = []
 
-    lines.append(f"# Weekly News: {TODAY}\n")
+    lines.append(f"# Digest - {TODAY}\n")
+    lines.append(f"**Period:** {PERIOD[0]} • {PERIOD[1]} \\")
+    lines.append(f"**Source:** X articles from Y feeds.\n")
 
     # Create highlights section.
     if digest.get("highlights"):
@@ -219,7 +222,7 @@ def generate_markdown(DATES: tuple, NEWS_PATH: str, digest: dict) -> str:
 
     result = "\n".join(lines)
     
-    filename = os.path.join(NEWS_PATH, f"{TODAY}.md")
+    filename = os.path.join(NEWS_PATH, f"{PERIOD[1]}.md")
 
     # Write digest to a file.
     with open(filename, "w", encoding="utf-8") as file:

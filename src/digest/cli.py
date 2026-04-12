@@ -29,10 +29,13 @@ DAYS_REVERSE =  {
     str(value): key for key, value in DAYS.items()
 }
 
-LANGUAGES = [
-    "en",
-    "fr"
-]
+LANGUAGES = {
+    "de": "german",
+    "en": "english",
+    "es": "spanish",
+    "fr": "french",
+    "it": "italian"
+}
 
 @app.command()
 def init(
@@ -52,7 +55,7 @@ def init(
     INTERVAL = 7 # In days.
     LANGUAGE = language.lower()
 
-    if LANGUAGE not in LANGUAGES:
+    if LANGUAGE not in LANGUAGES.keys():
         typer.echo("[ERROR] Invalid language.")
         raise typer.Exit(code=1)
 
@@ -280,7 +283,7 @@ def run(
     OPML_URL = os.getenv("OPML_URL")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     NEWS_PATH = os.getenv("NEWS_PATH")
-    LANGUAGE = os.getenv("LANGUAGE", "en")
+    LANGUAGE = LANGUAGES[os.getenv("LANGUAGE", "en")]
 
     if not OPML_URL or not GEMINI_API_KEY or not NEWS_PATH:
         if not silent:

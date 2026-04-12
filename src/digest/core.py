@@ -129,8 +129,8 @@ def digest_news(LANGUAGE: str, API_KEY:str, content: list, silent: bool) -> dict
     trial = 1
 
     # Get instructions from markdown file.
-    filename = f"instructions_{LANGUAGE}.md"
-    instructions = resources.files("digest.prompts").joinpath(filename).read_text()
+    filename = f"instructions.md"
+    instructions = resources.files("digest").joinpath(filename).read_text()
 
     while trial <= 5:
         try:
@@ -139,6 +139,9 @@ def digest_news(LANGUAGE: str, API_KEY:str, content: list, silent: bool) -> dict
                 contents=f"""
                     INSTRUCTIONS :
                     {instructions}
+
+                    OUTPUT LANGUAGE :
+                    {LANGUAGE}
 
                     CONTENT :
                     {content}

@@ -35,4 +35,4 @@ Repository = "https://github.com/gwendalminguy/tool-digest"
 where = ["src"]
 
 [tool.setuptools.package-data]
-digest = ["prompts/instructions_*.md"]
+digest = ["instructions.md"]

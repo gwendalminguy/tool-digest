@@ -34,13 +34,19 @@ LANGUAGES = {
     "en": "english",
     "es": "spanish",
     "fr": "french",
-    "it": "italian"
+    "hi": "hindi",
+    "it": "italian",
+    "ja": "japanese",
+    "pt": "portuguese",
+    "ru": "russian",
+    "zh": "chinese"
 }
 
 @app.command()
 def init(
     name: str = typer.Argument(help="Name of the project to configure."),
-    language: str = typer.Option("en", "--language", "-l", help="Language of the news.", min=0, max=23),
+    path: str = typer.Option("news", "--path", "-p", help="Path to Digest output directory."),
+    language: str = typer.Option("en", "--language", "-l", help="Language of the news."),
     opml_url: str = typer.Option(prompt=True, help="OPML URL of the group of RSS feeds to use."),
     gemini_api_key: str = typer.Option(prompt=True, hide_input=True, help="Gemini API key to use.")
 ):
@@ -51,7 +57,7 @@ def init(
     DIGEST_DIR = os.path.expanduser("~/.digest")
     OPML_URL = opml_url.strip()
     GEMINI_API_KEY = gemini_api_key.strip()
-    NEWS_DIR = os.path.join(os.getcwd(), "news")
+    NEWS_DIR = os.path.abspath(path)
     INTERVAL = 7 # In days.
     LANGUAGE = language.lower()
 
@@ -59,9 +65,23 @@ def init(
         typer.echo("[ERROR] Invalid language.")
         raise typer.Exit(code=1)
 
-    # Create necessary directories.
-    os.makedirs(DIGEST_DIR, exist_ok=True)
-    os.makedirs(NEWS_DIR, exist_ok=True)
+    if os.path.exists(NEWS_DIR) and not os.path.isdir(NEWS_DIR):
+        typer.echo("[ERROR] Path exists but is not a directory.")
+        raise typer.Exit(code=1)
+
+    # Create Digest directory.
+    try:
+        os.makedirs(DIGEST_DIR, exist_ok=True)
+    except OSError:
+        typer.echo("[ERROR] Unable to create Digest directory.")
+        raise typer.Exit(code=1)
+
+    # Create output directory.
+    try:
+        os.makedirs(NEWS_DIR, exist_ok=True)
+    except OSError:
+        typer.echo("[ERROR] Unable to create output directory.")
+        raise typer.Exit(code=1)
 
     CONFIG_PATH = os.path.join(DIGEST_DIR, f"config.{NAME}.env")
 

@@ -45,27 +45,29 @@ LANGUAGES = {
 @app.command()
 def init(
     name: str = typer.Argument(help="Name of the project to configure."),
-    path: str = typer.Option("news", "--path", "-p", help="Path to Digest output directory."),
-    language: str = typer.Option("en", "--language", "-l", help="Language of the news."),
     opml_url: str = typer.Option(prompt=True, help="OPML URL of the group of RSS feeds to use."),
-    gemini_api_key: str = typer.Option(prompt=True, hide_input=True, help="Gemini API key to use.")
+    api_key: str = typer.Option(prompt=True, hide_input=True, help="Google API key to use."),
+    path: str = typer.Option("news", "--path", "-p", help="Path to Digest output directory."),
+    language: str = typer.Option("en", "--language", "-l", help="Language of the news.")
 ):
     """
     Initialize a new project by generating a configuration file.
     """
     NAME = name.strip().lower()
     DIGEST_DIR = os.path.expanduser("~/.digest")
+    CONFIG_PATH = os.path.join(DIGEST_DIR, f"config.{NAME}.env")
+
     OPML_URL = opml_url.strip()
-    GEMINI_API_KEY = gemini_api_key.strip()
-    NEWS_DIR = os.path.abspath(path)
-    INTERVAL = 7 # In days.
+    API_KEY = api_key.strip()
+    NEWS_PATH = os.path.abspath(path)
     LANGUAGE = language.lower()
+    INTERVAL = 7 # In days.
 
     if LANGUAGE not in LANGUAGES.keys():
         typer.echo("[ERROR] Invalid language.")
         raise typer.Exit(code=1)
 
-    if os.path.exists(NEWS_DIR) and not os.path.isdir(NEWS_DIR):
+    if os.path.exists(NEWS_PATH) and not os.path.isdir(NEWS_PATH):
         typer.echo("[ERROR] Path exists but is not a directory.")
         raise typer.Exit(code=1)
 
@@ -78,18 +80,16 @@ def init(
 
     # Create output directory.
     try:
-        os.makedirs(NEWS_DIR, exist_ok=True)
+        os.makedirs(NEWS_PATH, exist_ok=True)
     except OSError:
         typer.echo("[ERROR] Unable to create output directory.")
         raise typer.Exit(code=1)
 
-    CONFIG_PATH = os.path.join(DIGEST_DIR, f"config.{NAME}.env")
-
     config = [
         f"NAME={NAME.upper()}",
         f"OPML_URL={OPML_URL}",
-        f"GEMINI_API_KEY={GEMINI_API_KEY}",
-        f"NEWS_PATH={NEWS_DIR}",
+        f"API_KEY={API_KEY}",
+        f"NEWS_PATH={NEWS_PATH}",
         f"INTERVAL={INTERVAL}",
         f"LANGUAGE={LANGUAGE}"
     ]
@@ -107,7 +107,96 @@ def init(
     os.chmod(CONFIG_PATH, stat.S_IRUSR | stat.S_IWUSR)
 
     typer.echo(f"[INFO] Digest configuration file created at: {CONFIG_PATH}")
-    typer.echo(f"[INFO] News will be saved as markdown files in: {NEWS_DIR}")
+    typer.echo(f"[INFO] News will be saved as markdown files in {LANGUAGES[LANGUAGE].capitalize()} at: {NEWS_PATH}")
+
+
+@app.command()
+def edit(
+    name: str = typer.Argument(help="Name of the project to edit."),
+    force: bool = typer.Option(False, "--force", "-f", help="No confirmation prompt before edition."),
+    opml_url: str = typer.Option(None, "--opml-url", "-o", help="OPML URL of the group of RSS feeds to use."),
+    api_key: str = typer.Option(None, "--api-key", "-a", hide_input=True, help="Google API key to use."),
+    path: str = typer.Option(None, "--path", "-p", help="Path to Digest output directory."),
+    language: str = typer.Option(None, "--language", "-l", help="Language of the news.")
+):
+    """
+    Edit the configuration of an existing project.
+    """
+    NAME = name.strip().lower()
+    DIGEST_DIR = os.path.expanduser("~/.digest")
+    CONFIG_PATH = os.path.join(DIGEST_DIR, f"config.{NAME}.env")
+
+    OPML_URL = opml_url.strip() if opml_url else None
+    API_KEY = api_key.strip() if api_key else None
+    NEWS_PATH = os.path.abspath(path) if path else None
+    LANGUAGE = language.lower() if language else None
+    INTERVAL = os.getenv("INTERVAL", "7")
+
+    if not os.path.exists(CONFIG_PATH):
+        typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
+        return
+
+    changed = {
+        "OPML URL": True if OPML_URL else False,
+        "API Key": True if API_KEY else False,
+        "News Path": True if NEWS_PATH else False,
+        "Language": True if LANGUAGE else False,
+    }
+
+    # Load configuration file.
+    load_dotenv(CONFIG_PATH, override=False)
+
+    if not LANGUAGE:
+        LANGUAGE = os.getenv("LANGUAGE")
+
+    if not NEWS_PATH:
+        NEWS_PATH = os.getenv("NEWS_PATH")
+
+    if not OPML_URL:
+        OPML_URL = os.getenv("OPML_URL")
+
+    if not API_KEY:
+        API_KEY = os.getenv("API_KEY")
+
+    if LANGUAGE not in LANGUAGES.keys():
+        typer.echo("[ERROR] Invalid language.")
+        raise typer.Exit(code=1)
+
+    if os.path.exists(NEWS_PATH) and not os.path.isdir(NEWS_PATH):
+        typer.echo("[ERROR] Path exists but is not a directory.")
+        raise typer.Exit(code=1)
+
+    # Create output directory.
+    try:
+        os.makedirs(NEWS_PATH, exist_ok=True)
+    except OSError:
+        typer.echo("[ERROR] Unable to create output directory.")
+        raise typer.Exit(code=1)
+
+    config = [
+        f"NAME={NAME.upper()}",
+        f"OPML_URL={OPML_URL}",
+        f"API_KEY={API_KEY}",
+        f"NEWS_PATH={NEWS_PATH}",
+        f"INTERVAL={INTERVAL}",
+        f"LANGUAGE={LANGUAGE}"
+    ]
+
+    elements = [key for key, value in changed.items() if value]
+
+    # Confirm changes.
+    if elements:
+        if not force and not typer.confirm(f"[WARNING] Update {', '.join(elements)} for {NAME}?"):
+            raise typer.Abort()
+    else:
+        typer.echo("[ERROR] No change made. Run [digest edit <name> <option> <value>] to edit an existing project.")
+        raise typer.Exit(code=1)
+
+    # Overwrite configuration file in ~/.digest/
+    with open(CONFIG_PATH, "w", encoding="utf-8") as file:
+        file.write("\n".join(config))
+
+    typer.echo(f"[INFO] Configuration file updated for {NAME}.")
 
 
 @app.command()
@@ -301,11 +390,11 @@ def run(
     INTERVAL = int(os.getenv("INTERVAL", "7")) # In days.
     DATES = (NOW - timedelta(days=INTERVAL), NOW)
     OPML_URL = os.getenv("OPML_URL")
-    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    API_KEY = os.getenv("API_KEY")
     NEWS_PATH = os.getenv("NEWS_PATH")
     LANGUAGE = LANGUAGES[os.getenv("LANGUAGE", "en")]
 
-    if not OPML_URL or not GEMINI_API_KEY or not NEWS_PATH:
+    if not OPML_URL or not API_KEY or not NEWS_PATH:
         if not silent:
             typer.echo("[ERROR] Missing required configuration.")
         return
@@ -313,7 +402,7 @@ def run(
     try:
         feeds = get_feeds(OPML_URL)
         content = get_news(DATES, feeds, silent)
-        result = digest_news(LANGUAGE, GEMINI_API_KEY, content, silent)
+        result = digest_news(LANGUAGE, API_KEY, content, silent)
     except RuntimeError as e:
         if not silent:
             typer.echo(f"[ERROR] {e}")

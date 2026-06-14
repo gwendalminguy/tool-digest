@@ -75,7 +75,6 @@ The project contains several files and directories, which are the following:
 | [`src/digest/instructions.md`](https://github.com/gwendalminguy/tool-digest/blob/main/src/digest/prompts/) | The markdown files containing AI instructions to produce a structured JSON output. |
 | [`LICENSE`](https://github.com/gwendalminguy/tool-digest/blob/main/LICENSE) | The license file. |
 | [`pyproject.toml`](https://github.com/gwendalminguy/tool-digest/blob/main/pyproject.toml) | The packaging configuration file. |
-| [`requirements.txt`](https://github.com/gwendalminguy/tool-digest/blob/main/requirements.txt) | The text file containing requirements to install. |
 
 ## Prerequisites
 
@@ -95,6 +94,7 @@ In order to schedule Digest so that it can run automatically, `crontab` is requi
 
 ```bash
 $ sudo apt install cron
+$ service cron start
 ```
 
 ## Installation

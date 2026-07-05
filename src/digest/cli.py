@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 
 import os
+import re
 import stat
 import subprocess
 import sys
@@ -62,6 +63,10 @@ def init(
     NEWS_PATH = os.path.abspath(path)
     LANGUAGE = language.lower()
     INTERVAL = 7 # In days.
+
+    if not re.match("^[a-z0-9][a-z0-9_-]*$", NAME):
+        typer.echo("[ERROR] Invalid name.")
+        raise typer.Exit(code=1)
 
     if LANGUAGE not in LANGUAGES.keys():
         typer.echo("[ERROR] Invalid language.")
@@ -132,6 +137,10 @@ def edit(
     NEWS_PATH = os.path.abspath(path) if path else None
     LANGUAGE = language.lower() if language else None
     INTERVAL = interval if interval else None
+
+    if not re.match("^[a-z0-9][a-z0-9_-]*$", NAME):
+        typer.echo("[ERROR] Invalid name.")
+        raise typer.Exit(code=1)
 
     if not os.path.exists(CONFIG_PATH):
         typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
@@ -221,6 +230,10 @@ def cron(
     DIGEST_DIR = os.path.expanduser("~/.digest")
     CONFIG_PATH = os.path.join(DIGEST_DIR, f"config.{NAME}.env")
     PYTHON_PATH = sys.executable
+
+    if not re.match("^[a-z0-9][a-z0-9_-]*$", NAME):
+        typer.echo("[ERROR] Invalid name.")
+        raise typer.Exit(code=1)
 
     day = day.lower()
 
@@ -340,6 +353,10 @@ def rm(
     CONFIG_PATH = os.path.join(DIGEST_DIR, f"config.{NAME}.env")
     PYTHON_PATH = sys.executable
 
+    if not re.match("^[a-z0-9][a-z0-9_-]*$", NAME):
+        typer.echo("[ERROR] Invalid name.")
+        raise typer.Exit(code=1)
+
     if not os.path.exists(CONFIG_PATH):
         typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
         return
@@ -387,6 +404,10 @@ def run(
     NAME = name.strip().lower()
     DIGEST_DIR = os.path.expanduser("~/.digest")
     CONFIG_PATH = os.path.join(DIGEST_DIR, f"config.{NAME}.env")
+
+    if not re.match("^[a-z0-9][a-z0-9_-]*$", NAME):
+        typer.echo("[ERROR] Invalid name.")
+        raise typer.Exit(code=1)
 
     if not os.path.exists(CONFIG_PATH):
         if not silent:

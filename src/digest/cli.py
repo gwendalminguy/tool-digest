@@ -30,6 +30,11 @@ DAYS_REVERSE =  {
     str(value): key for key, value in DAYS.items()
 }
 
+FREQUENCIES = [
+    "weekly",
+    "monthly"
+]
+
 LANGUAGES = {
     "de": "german",
     "en": "english",
@@ -50,7 +55,7 @@ def init(
     api_key: str = typer.Option(prompt=True, hide_input=True, help="Google API key to use."),
     path: str = typer.Option("news", "--path", "-p", help="Path to Digest output directory."),
     language: str = typer.Option("en", "--language", "-l", help="Language of the news."),
-    interval: int = typer.Option(None, "--interval", "-i", help="Interval in days of the news to treat.")
+    frequency: int = typer.Option("weekly", "--frequency", "-f", help="Default frequency (weekly|monthly).")
 ):
     """
     Initialize a new project by generating a configuration file.
@@ -63,7 +68,7 @@ def init(
     API_KEY = api_key.strip()
     NEWS_PATH = os.path.abspath(path)
     LANGUAGE = language.lower()
-    INTERVAL = interval or 7 # In days.
+    FREQUENCY = frequency.lower()
 
     if not re.match("^[a-z0-9][a-z0-9_-]*$", NAME):
         typer.echo("[ERROR] Invalid name.")
@@ -71,6 +76,10 @@ def init(
 
     if LANGUAGE not in LANGUAGES.keys():
         typer.echo("[ERROR] Invalid language.")
+        raise typer.Exit(code=1)
+
+    if FREQUENCY not in FREQUENCIES:
+        typer.echo("[ERROR] Invalid frequency (weekly|monthly).")
         raise typer.Exit(code=1)
 
     if os.path.exists(NEWS_PATH) and not os.path.isdir(NEWS_PATH):
@@ -96,8 +105,8 @@ def init(
         f"OPML_URL={OPML_URL}",
         f"API_KEY={API_KEY}",
         f"NEWS_PATH={NEWS_PATH}",
-        f"INTERVAL={INTERVAL}",
-        f"LANGUAGE={LANGUAGE}"
+        f"LANGUAGE={LANGUAGE}",
+        f"FREQUENCY={FREQUENCY}"
     ]
 
     # Confirm if configuration already exists.
@@ -124,7 +133,7 @@ def edit(
     api_key: str = typer.Option(None, "--api-key", "-a", hide_input=True, help="Google API key to use."),
     path: str = typer.Option(None, "--path", "-p", help="Path to Digest output directory."),
     language: str = typer.Option(None, "--language", "-l", help="Language of the news."),
-    interval: int = typer.Option(None, "--interval", "-i", help="Interval in days of the news to treat.")
+    frequency: int = typer.Option(None, "--frequency", "-f", help="Default frequency (weekly|monthly).")
 ):
     """
     Edit the configuration of an existing project.
@@ -137,7 +146,7 @@ def edit(
     API_KEY = api_key.strip() if api_key else None
     NEWS_PATH = os.path.abspath(path) if path else None
     LANGUAGE = language.lower() if language else None
-    INTERVAL = interval if interval else None
+    FREQUENCY = frequency.lower() if frequency else None
 
     if not re.match("^[a-z0-9][a-z0-9_-]*$", NAME):
         typer.echo("[ERROR] Invalid name.")
@@ -152,7 +161,7 @@ def edit(
         "API Key": True if API_KEY else False,
         "News Path": True if NEWS_PATH else False,
         "Language": True if LANGUAGE else False,
-        "Interval": True if INTERVAL else False,
+        "Frequency": True if FREQUENCY else False,
     }
 
     # Load configuration file.
@@ -170,19 +179,15 @@ def edit(
     if not API_KEY:
         API_KEY = os.getenv("API_KEY")
 
-    if not INTERVAL:
-        try:
-            INTERVAL = int(os.getenv("INTERVAL"))
-        except (TypeError, ValueError):
-            typer.echo("[ERROR] Invalid interval in configuration file.")
-            raise typer.Exit(code=1)
+    if not FREQUENCY:
+        FREQUENCY = os.getenv("FREQUENCY")
 
     if LANGUAGE not in LANGUAGES.keys():
         typer.echo("[ERROR] Invalid language.")
         raise typer.Exit(code=1)
 
-    if INTERVAL < 0:
-        typer.echo("[ERROR] Invalid interval.")
+    if FREQUENCY not in FREQUENCIES:
+        typer.echo("[ERROR] Invalid frequency (weekly|monthly).")
         raise typer.Exit(code=1)
 
     if os.path.exists(NEWS_PATH) and not os.path.isdir(NEWS_PATH):
@@ -201,8 +206,8 @@ def edit(
         f"OPML_URL={OPML_URL}",
         f"API_KEY={API_KEY}",
         f"NEWS_PATH={NEWS_PATH}",
-        f"INTERVAL={INTERVAL}",
-        f"LANGUAGE={LANGUAGE}"
+        f"LANGUAGE={LANGUAGE}",
+        f"FREQUENCY={FREQUENCY}"
     ]
 
     elements = [key for key, value in changed.items() if value]
@@ -225,8 +230,8 @@ def edit(
 @app.command()
 def cron(
     name: str = typer.Argument(help="Name of the project to create a cronjob for."),
-    hour: int = typer.Option(9, "--hour", "-H", help="Hour of the day.", min=0, max=23),
-    day: str = typer.Option("sunday", "--day", "-d", help="Day of the week.")
+    hour: int = typer.Option(9, "-H", help="Hour of the day.", min=0, max=23),
+    day: str | int = typer.Option(None, "--day", "-d", help="Day of the week or month.")
 ):
     """
     Create a cronjob to run Digest every week for the specified project.
@@ -236,24 +241,48 @@ def cron(
     CONFIG_PATH = os.path.join(DIGEST_DIR, f"config.{NAME}.env")
     DIGEST_PATH = shutil.which("digest")
 
+    # Load configuration file.
+    load_dotenv(CONFIG_PATH, override=False)
+
+    FREQUENCY = os.getenv("frequency")
+    
+    if not FREQUENCY in FREQUENCIES:
+        typer.echo("[ERROR] No frequency found. Run [digest edit <name> --frequency weekly|monthly] to define it.")
+        raise typer.Exit(code=1)
+
     if not re.match("^[a-z0-9][a-z0-9_-]*$", NAME):
         typer.echo("[ERROR] Invalid name.")
         raise typer.Exit(code=1)
 
-    day = day.lower()
+    # Weekly Mode
+    if FREQUENCY == "weekly":
+        if not day:
+            day = "sunday"
+        if not type(day) == str or day.lower() not in DAYS:
+            typer.echo("[ERROR] Invalid day.")
+            raise typer.Exit(code=1)
 
-    if day not in DAYS:
-        typer.echo("[ERROR] Invalid day.")
-        raise typer.Exit(code=1)
+        DAY_WEEK = DAYS[day.lower()]
+        DAY_MONTH = "*"
 
-    DAY = DAYS[day]
+    # Monthly Mode
+    elif FREQUENCY == "monthly":
+        if not day:
+            day = 1
+        if not type(day) == int day < 1 or day > 28:
+            typer.echo("[ERROR] Invalid day (1-28).")
+            raise typer.Exit(code=1)
+
+        DAY_WEEK = "*"
+        DAY_MONTH = day
 
     if not os.path.exists(CONFIG_PATH):
         typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
         return
 
+    # Define tag and cronjob expression.
     tag = f"# digest:{NAME}"
-    command = f"0 {hour} * * {DAY} {DIGEST_PATH} run {NAME} --silent {tag}"
+    command = f"0 {hour} {DAY_MONTH} * {DAY_WEEK} {DIGEST_PATH} run {NAME} --silent {tag}"
 
     # Retrieve all existing cronjobs.
     try:
@@ -304,7 +333,6 @@ def ls():
         crontab = current.splitlines()
     except FileNotFoundError as e:
         crontab = None
-        cronjob = "No cronjob configured."
 
     # Get name and news directory for each project.
     for file_path in files:
@@ -321,7 +349,7 @@ def ls():
                 elif key == "NEWS_PATH":
                     news_path = value
 
-            cronjob = "No Cronjob"
+            cronjob = "No cronjob configured."
 
             # Get cronjob if one is configured.
             if crontab:
@@ -330,8 +358,12 @@ def ls():
                     if line.strip().endswith(tag):
                         moment = line.split(" ")[:5]
                         hour = f"{moment[1]}:00"
-                        day = DAYS_REVERSE[moment[4]].capitalize() if moment[4] in DAYS_REVERSE.keys() else "Unknown"
-                        cronjob = f"Cronjob at {hour} every {day}"
+                        if moment[2] != "*"
+                            day = moment[2]
+                            cronjob = f"Cronjob at {hour} every {day} of each month."
+                        if moment[4] != "*"
+                            day = DAYS_REVERSE[moment[4]].capitalize() if moment[4] in DAYS_REVERSE.keys() else "Unknown"
+                            cronjob = f"Cronjob at {hour} every {day} of each week."
                         break
 
             content.append({
@@ -423,17 +455,31 @@ def run(
     load_dotenv(CONFIG_PATH, override=False)
 
     NOW = datetime.now(timezone.utc)
-    INTERVAL = int(os.getenv("INTERVAL", "7")) # In days.
-    DATES = (NOW - timedelta(days=INTERVAL), NOW)
     OPML_URL = os.getenv("OPML_URL")
     API_KEY = os.getenv("API_KEY")
     NEWS_PATH = os.getenv("NEWS_PATH")
     LANGUAGE = LANGUAGES[os.getenv("LANGUAGE", "en")]
+    FREQUENCY = os.getenv("frequency")
+    
+    if not FREQUENCY in FREQUENCIES:
+        typer.echo("[ERROR] No frequency found. Run [digest edit <name> --frequency weekly|monthly] to define it.")
+        raise typer.Exit(code=1)
 
     if not OPML_URL or not API_KEY or not NEWS_PATH:
         if not silent:
             typer.echo("[ERROR] Missing required configuration.")
         return
+
+    # Weekly Mode
+    if FREQUENCY == "weekly":
+        INTERVAL = 7
+
+    # Monthly Mode
+    if FREQUENCY == "monthly":
+        INTERVAL = 30
+
+    # Dates Window
+    DATES = (NOW - timedelta(days=INTERVAL), NOW)
 
     try:
         feeds = get_feeds(OPML_URL)

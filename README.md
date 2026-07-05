@@ -11,7 +11,7 @@ Digest helps easily keep up with many news source feeds and summarize them. Thos
 On launch, Digest works as follow:
 
 1. Fetch RSS feeds from the provided OPML URL
-2. Filter recent articles (seven last days)
+2. Filter recent articles (7 or 30 last days)
 3. Send them to Gemini for summarization
 4. Generate a structured markdown file
 
@@ -72,8 +72,9 @@ The project contains several files and directories, which are the following:
 | :---- | :---------- |
 | [`src/digest/cli.py`](https://github.com/gwendalminguy/tool-digest/blob/main/src/digest/cli.py) | The python module containing command-line interface functions. |
 | [`src/digest/core.py`](https://github.com/gwendalminguy/tool-digest/blob/main/src/digest/core.py) | The python module containing core functions. |
-| [`src/digest/instructions.md`](https://github.com/gwendalminguy/tool-digest/blob/main/src/digest/prompts/) | The markdown files containing AI instructions to produce a structured JSON output. |
-| [`LICENSE`](https://github.com/gwendalminguy/tool-digest/blob/main/LICENSE) | The license file. |
+| [`src/digest/instructions.md`](https://github.com/gwendalminguy/tool-digest/blob/main/src/digest/instructions.md) | The markdown file containing AI instructions to produce a structured JSON output. |
+| [`LICENSE`](https://github.com/gwendalminguy/tool-digest/blob/main/LICENSE) | The text file defining the license of the tool. |
+| [`README.md`](https://github.com/gwendalminguy/tool-digest/blob/main/README.md) | The markdown file introducting the tool. |
 | [`pyproject.toml`](https://github.com/gwendalminguy/tool-digest/blob/main/pyproject.toml) | The packaging configuration file. |
 
 ## Prerequisites
@@ -112,7 +113,7 @@ $ pip install tool-digest
 To initialize a new Digest, run:
 
 ```bash
-$ digest init <name>    [--language en --path news/]        # Initialize a new Digest with a name.
+$ digest init <name>    [--language en --path news/ --frequency weekly]     # Initialize a new Digest with a name.
 ```
 
 During initialization, the user will be prompted for:
@@ -122,10 +123,16 @@ During initialization, the user will be prompted for:
 
 On initialization of a new Digest, a configuration is created at `~/.digest/config.<name>.env`, and a `news/` directory is created (where the `init` command is launched when no specific path is specified), in which the summarized news will be saved as a markdown file.
 
-To configure this Digest to launch weekly, run:
+In **weekly mode**, to configure this Digest to launch automatically, run:
 
 ```bash
-$ digest cron <name>    [--day monday --hour 9]             # Schedule a cronjob to run a Digest automatically every week.
+$ digest cron <name>    [--day monday --hour 9]             # Schedule a cronjob to run a Digest automatically every week on Monday.
+```
+
+In **monthly mode**, to configure this Digest to launch automatically, run:
+
+```bash
+$ digest cron <name>    [--day 15]                      # Schedule a cronjob to run a Digest automatically on the 15 of every month.
 ```
 
 Even if a cronjob has been set, the virtual environment can be still be deactivated once Digest has been configured, it will still run automatically as expected. Do not delete the virtual environment though, or the cronjob will fail. If you want to delete the virtual environment, make sure you remove any Digest-related cronjob before.

@@ -234,7 +234,7 @@ def cron(
     NAME = name.strip().lower()
     DIGEST_DIR = os.path.expanduser("~/.digest")
     CONFIG_PATH = os.path.join(DIGEST_DIR, f"config.{NAME}.env")
-    PYTHON_PATH = sys.executable
+    DIGEST_PATH = shutil.which("digest")
 
     if not re.match("^[a-z0-9][a-z0-9_-]*$", NAME):
         typer.echo("[ERROR] Invalid name.")
@@ -253,7 +253,7 @@ def cron(
         return
 
     tag = f"# digest:{NAME}"
-    command = f"0 {hour} * * {DAY} {PYTHON_PATH} -m digest.cli run --silent {NAME} {tag}"
+    command = f"0 {hour} * * {DAY} {DIGEST_PATH} run {NAME} --silent {tag}"
 
     # Retrieve all existing cronjobs.
     try:

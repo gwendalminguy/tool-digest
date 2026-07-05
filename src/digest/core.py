@@ -223,11 +223,22 @@ def generate_markdown(DATES: tuple, NEWS_PATH: str, digest: dict, length: tuple)
 
     if details:
         lines.append("## Details\n")
-        for section in digest["summary"]:
-            lines.append(f"- ### {section['category']}\n")
+        for section in digest.get("summary", []):
+            if not isinstance(section, dict):
+                continue
 
-            for item in section["items"]:
-                lines.append(f"  - **[{item['title']}]({item['link']})**: {item['summary']}")
+            category = section.get("category", "Uncategorized")
+            lines.append(f"- ### {category}\n")
+
+            for item in section.get("items", []):
+                if not isinstance(item, dict):
+                    continue
+
+                title = item.get("title", "Untitled")
+                link = item.get("link", "#")
+                summary = item.get("summary", "*No content.*")
+
+                lines.append(f"  - **[{title}]({link})**: {summary}")
 
             lines.append("")
 

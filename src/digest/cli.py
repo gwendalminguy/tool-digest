@@ -117,7 +117,7 @@ def init(
 
     # Create configuration file in ~/.digest/
     with open(CONFIG_PATH, "w", encoding="utf-8") as file:
-        file.write("\n".join(config))
+        file.write("\n".join(config) + "\n")
 
     # Set READ and WRITE permissions for user.
     os.chmod(CONFIG_PATH, stat.S_IRUSR | stat.S_IWUSR)
@@ -134,7 +134,7 @@ def edit(
     api_key: str = typer.Option(None, "--api-key", "-a", hide_input=True, help="Google API key to use."),
     path: str = typer.Option(None, "--path", "-p", help="Path to Digest output directory."),
     language: str = typer.Option(None, "--language", "-l", help="Language of the news."),
-    frequency: str = typer.Option(None, "--frequency", "-f", help="Default frequency (weekly|monthly).")
+    frequency: str = typer.Option(None, "--frequency", "-F", help="Default frequency (weekly|monthly).")
 ):
     """
     Edit the configuration of an existing project.
@@ -223,7 +223,7 @@ def edit(
 
     # Overwrite configuration file in ~/.digest/
     with open(CONFIG_PATH, "w", encoding="utf-8") as file:
-        file.write("\n".join(config))
+        file.write("\n".join(config) + "\n")
 
     typer.echo(f"[INFO] Configuration file updated for {NAME}.")
 
@@ -231,8 +231,8 @@ def edit(
 @app.command()
 def cron(
     name: str = typer.Argument(help="Name of the project to create a cronjob for."),
-    hour: int = typer.Option(9, "-H", help="Hour of the day.", min=0, max=23),
-    day: str | int = typer.Option(None, "--day", "-d", help="Day of the week or month.")
+    hour: int = typer.Option(9, "--hour", "-H", help="Hour of the day.", min=0, max=23),
+    day: str = typer.Option(None, "--day", "-d", help="Day of the week or month.")
 ):
     """
     Create a cronjob to run Digest every week for the specified project.
@@ -263,7 +263,7 @@ def cron(
     if FREQUENCY == "weekly":
         if not day:
             day = "sunday"
-        if not isinstance(day, str) or day.lower() not in DAYS:
+        if day.lower() not in DAYS:
             typer.echo("[ERROR] Invalid day.")
             raise typer.Exit(code=1)
 
@@ -274,7 +274,13 @@ def cron(
     elif FREQUENCY == "monthly":
         if not day:
             day = 1
-        if not isinstance(day, int) or day < 1 or day > 28:
+        else:
+            try:
+                day = int(day)
+            except ValueError:
+                typer.echo("[ERROR] Invalid day.")
+            raise typer.Exit(code=1)
+        if day < 1 or day > 28:
             typer.echo("[ERROR] Invalid day (1-28).")
             raise typer.Exit(code=1)
 

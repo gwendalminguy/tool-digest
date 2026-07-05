@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 import os
 import re
 import stat
+import shutil
 import subprocess
 import sys
 import typer
@@ -244,6 +245,10 @@ def cron(
     # Load configuration file.
     load_dotenv(CONFIG_PATH, override=False)
 
+    if not os.path.exists(CONFIG_PATH):
+        typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
+        return
+
     FREQUENCY = os.getenv("FREQUENCY")
     
     if FREQUENCY not in FREQUENCIES:
@@ -275,10 +280,6 @@ def cron(
 
         DAY_WEEK = "*"
         DAY_MONTH = day
-
-    if not os.path.exists(CONFIG_PATH):
-        typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
-        return
 
     # Define tag and cronjob expression.
     tag = f"# digest:{NAME}"
@@ -363,7 +364,7 @@ def ls():
                 tag = f"# digest:{name.lower()}"
                 for line in crontab:
                     if line.strip().endswith(tag):
-                        moment = line.split(" ")[:5]
+                        moment = line.strip().split(" ")[:5]
                         hour = f"{moment[1]}:00"
                         if moment[2] != "*":
                             day = moment[2]

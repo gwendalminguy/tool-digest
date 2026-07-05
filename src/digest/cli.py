@@ -117,7 +117,8 @@ def edit(
     opml_url: str = typer.Option(None, "--opml-url", "-o", help="OPML URL of the group of RSS feeds to use."),
     api_key: str = typer.Option(None, "--api-key", "-a", hide_input=True, help="Google API key to use."),
     path: str = typer.Option(None, "--path", "-p", help="Path to Digest output directory."),
-    language: str = typer.Option(None, "--language", "-l", help="Language of the news.")
+    language: str = typer.Option(None, "--language", "-l", help="Language of the news."),
+    interval: int = typer.Option(None, "--interval", "-i", help="...")
 ):
     """
     Edit the configuration of an existing project.
@@ -130,7 +131,7 @@ def edit(
     API_KEY = api_key.strip() if api_key else None
     NEWS_PATH = os.path.abspath(path) if path else None
     LANGUAGE = language.lower() if language else None
-    INTERVAL = os.getenv("INTERVAL", "7")
+    INTERVAL = interval if interval else None
 
     if not os.path.exists(CONFIG_PATH):
         typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
@@ -141,6 +142,7 @@ def edit(
         "API Key": True if API_KEY else False,
         "News Path": True if NEWS_PATH else False,
         "Language": True if LANGUAGE else False,
+        "Interval": True if INTERVAL else False,
     }
 
     # Load configuration file.
@@ -158,8 +160,15 @@ def edit(
     if not API_KEY:
         API_KEY = os.getenv("API_KEY")
 
+    if not INTERVAL:
+        INTERVAL = os.getenv("INTERVAL")
+
     if LANGUAGE not in LANGUAGES.keys():
         typer.echo("[ERROR] Invalid language.")
+        raise typer.Exit(code=1)
+
+    if INTERVAL < 0:
+        typer.echo("[ERROR] Invalid interval.")
         raise typer.Exit(code=1)
 
     if os.path.exists(NEWS_PATH) and not os.path.isdir(NEWS_PATH):

@@ -73,6 +73,7 @@ def get_news(DATES: tuple, feeds: list, silent: bool) -> list:
     """
     start = time()
     news = []
+    seen = set()
 
     for element in feeds:
         category = element["title"]
@@ -97,13 +98,20 @@ def get_news(DATES: tuple, feeds: list, silent: bool) -> list:
             published = datetime(*published[:6], tzinfo=timezone.utc)
 
             if published > DATES[0]:
-                summary = getattr(entry, "summary", "No Summary")
+                summary = getattr(entry, "summary", "*No Content*")
                 clean = re.sub(r"</?\w+[^>]*>", "", summary)
+
+                key = getattr(entry, "link", "")
+
+                if not key or key in seen:
+                    continue
+
+                seen.add(key)
 
                 news.append({
                     "category": category,
-                    "title": getattr(entry, "title", "No Title"),
-                    "link": getattr(entry, "link", "No Link"),
+                    "title": getattr(entry, "title", "*Untitled*"),
+                    "link": getattr(entry, "link", "#"),
                     "summary": clean
                 })
 
@@ -234,9 +242,9 @@ def generate_markdown(DATES: tuple, NEWS_PATH: str, digest: dict, length: tuple)
                 if not isinstance(item, dict):
                     continue
 
-                title = item.get("title", "Untitled")
+                title = item.get("title", "*Untitled*")
                 link = item.get("link", "#")
-                summary = item.get("summary", "*No content.*")
+                summary = item.get("summary", "*No Content*")
 
                 lines.append(f"  - **[{title}]({link})**: {summary}")
 

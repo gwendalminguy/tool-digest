@@ -170,7 +170,10 @@ def edit(
         API_KEY = os.getenv("API_KEY")
 
     if not INTERVAL:
-        INTERVAL = os.getenv("INTERVAL")
+        try:
+            INTERVAL = int(os.getenv("INTERVAL"))
+        except (TypeError, ValueError):
+            typer.echo("[ERROR] Invalid interval in configuration file.")
 
     if LANGUAGE not in LANGUAGES.keys():
         typer.echo("[ERROR] Invalid language.")

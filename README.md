@@ -73,6 +73,7 @@ The project contains several files and directories, which are the following:
 | [`src/digest/cli.py`](https://github.com/gwendalminguy/tool-digest/blob/main/src/digest/cli.py) | The python module containing command-line interface functions. |
 | [`src/digest/core.py`](https://github.com/gwendalminguy/tool-digest/blob/main/src/digest/core.py) | The python module containing core functions. |
 | [`src/digest/instructions.md`](https://github.com/gwendalminguy/tool-digest/blob/main/src/digest/instructions.md) | The markdown file containing AI instructions to produce a structured JSON output. |
+| [`CHANGELOG.md`](https://github.com/gwendalminguy/tool-digest/blob/main/CHANGELOG.md) | The markdown file listing the changes history of the tool. |
 | [`LICENSE`](https://github.com/gwendalminguy/tool-digest/blob/main/LICENSE) | The text file defining the license of the tool. |
 | [`README.md`](https://github.com/gwendalminguy/tool-digest/blob/main/README.md) | The markdown file introducting the tool. |
 | [`pyproject.toml`](https://github.com/gwendalminguy/tool-digest/blob/main/pyproject.toml) | The packaging configuration file. |

@@ -209,22 +209,27 @@ def generate_markdown(DATES: tuple, NEWS_PATH: str, digest: dict, length: tuple)
     lines.append(f"**Source:** {length[0]} articles from {length[1]} feeds.\n")
 
     # Create highlights section.
-    if digest.get("highlights"):
+    highlights = digest.get("highlights", [])
+
+    if highlights:
         lines.append("## Highlights\n")
-        for highlight in digest["highlights"]:
+        for highlight in highlights:
             lines.append(f"- {highlight}")
 
         lines.append("")
 
     # Create details section and build each category.
-    lines.append("## Details\n")
-    for section in digest["summary"]:
-        lines.append(f"- ### {section['category']}\n")
+    details = digest.get("summary", [])
 
-        for item in section["items"]:
-            lines.append(f"  - **[{item['title']}]({item['link']})**: {item['summary']}")
+    if details:
+        lines.append("## Details\n")
+        for section in digest["summary"]:
+            lines.append(f"- ### {section['category']}\n")
 
-        lines.append("")
+            for item in section["items"]:
+                lines.append(f"  - **[{item['title']}]({item['link']})**: {item['summary']}")
+
+            lines.append("")
 
     result = "\n".join(lines)
     

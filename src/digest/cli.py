@@ -276,7 +276,8 @@ def ls():
         current = result.stdout if result.returncode == 0 else ""
         crontab = current.splitlines()
     except FileNotFoundError as e:
-        pass
+        crontab = None
+        cronjob = "No cronjob configured."
 
     # Get name and news directory for each project.
     for file_path in files:

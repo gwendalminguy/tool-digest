@@ -303,8 +303,11 @@ def cron(
 
     for line in crontab:
         if line.strip().endswith(tag):
-            typer.echo("[INFO] Cronjob already exists.")
-            return
+            if not typer.confirm(f"[WARNING] Cronjob for {NAME} already exists. Overwrite?"):
+                raise typer.Abort()
+
+            # Remove deprecated line
+            crontab[:] = [_ for _ in crontab if not line]
 
     # Rewrite existing crontab and add new one.
     crontab.append(f"{command}")

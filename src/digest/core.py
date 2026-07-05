@@ -5,6 +5,7 @@ Module containing core functions.
 """
 from datetime import datetime, timedelta, timezone
 from google import genai
+from google.genai import errors as genai_errors
 from importlib import resources
 from time import sleep, time
 from xml.etree import ElementTree
@@ -159,7 +160,7 @@ def digest_news(LANGUAGE: str, API_KEY:str, content: list, silent: bool) -> dict
             success = True
             break
 
-        except Exception as e:
+        except (genai_errors.APIError, requests.exceptions.RequestException, TimeoutError) as e:
             if not silent:
                 print(f"Error (Trial {trial}): {e}")
             sleep(2 ** trial)

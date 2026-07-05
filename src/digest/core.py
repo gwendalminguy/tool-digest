@@ -175,6 +175,9 @@ def digest_news(LANGUAGE: str, API_KEY:str, content: list, silent: bool) -> dict
     if raw.startswith("```"):
         raw = raw.split("```")[1]
 
+    if raw[:5] == "json\n":
+        raw = raw[5:]
+
     try:
         result = json.loads(raw)
     except json.JSONDecodeError:

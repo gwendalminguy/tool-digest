@@ -307,7 +307,7 @@ def cron(
                 raise typer.Abort()
 
             # Remove deprecated line
-            crontab[:] = [_ for _ in crontab if not line]
+            crontab[:] = [item for item in crontab if not item.strip().endswith(tag)]
 
     # Rewrite existing crontab and add new one.
     crontab.append(f"{command}")

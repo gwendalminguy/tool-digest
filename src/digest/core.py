@@ -1,4 +1,3 @@
-#!/venv/bin/python3
 """
 core.py
 Module containing core functions.

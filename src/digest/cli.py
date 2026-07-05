@@ -49,7 +49,8 @@ def init(
     opml_url: str = typer.Option(prompt=True, help="OPML URL of the group of RSS feeds to use."),
     api_key: str = typer.Option(prompt=True, hide_input=True, help="Google API key to use."),
     path: str = typer.Option("news", "--path", "-p", help="Path to Digest output directory."),
-    language: str = typer.Option("en", "--language", "-l", help="Language of the news.")
+    language: str = typer.Option("en", "--language", "-l", help="Language of the news."),
+    interval: int = typer.Option(None, "--interval", "-i", help="Interval in days of the news to treat.")
 ):
     """
     Initialize a new project by generating a configuration file.
@@ -62,7 +63,7 @@ def init(
     API_KEY = api_key.strip()
     NEWS_PATH = os.path.abspath(path)
     LANGUAGE = language.lower()
-    INTERVAL = 7 # In days.
+    INTERVAL = interval or 7 # In days.
 
     if not re.match("^[a-z0-9][a-z0-9_-]*$", NAME):
         typer.echo("[ERROR] Invalid name.")
@@ -123,7 +124,7 @@ def edit(
     api_key: str = typer.Option(None, "--api-key", "-a", hide_input=True, help="Google API key to use."),
     path: str = typer.Option(None, "--path", "-p", help="Path to Digest output directory."),
     language: str = typer.Option(None, "--language", "-l", help="Language of the news."),
-    interval: int = typer.Option(None, "--interval", "-i", help="...")
+    interval: int = typer.Option(None, "--interval", "-i", help="Interval in days of the news to treat.")
 ):
     """
     Edit the configuration of an existing project.
@@ -174,6 +175,7 @@ def edit(
             INTERVAL = int(os.getenv("INTERVAL"))
         except (TypeError, ValueError):
             typer.echo("[ERROR] Invalid interval in configuration file.")
+            raise typer.Exit(code=1)
 
     if LANGUAGE not in LANGUAGES.keys():
         typer.echo("[ERROR] Invalid language.")

@@ -278,8 +278,8 @@ def cron(
             try:
                 day = int(day)
             except ValueError:
-                typer.echo("[ERROR] Invalid day.")
-            raise typer.Exit(code=1)
+                typer.echo("[ERROR] Invalid day (1-28).")
+                raise typer.Exit(code=1)
         if day < 1 or day > 28:
             typer.echo("[ERROR] Invalid day (1-28).")
             raise typer.Exit(code=1)

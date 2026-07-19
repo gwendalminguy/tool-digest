@@ -374,7 +374,7 @@ def ls():
                 elif key == "NEWS_PATH":
                     news_path = value
 
-            cronjob = "No cronjob configured."
+            cronjob = "None"
 
             # Get cronjob if one is configured.
             if crontab:
@@ -398,21 +398,34 @@ def ls():
             })
 
     # Compute column widths
-    name_width = max(len(project["name"]) for project in content + [{"name": "NAME"}]) + 2
-    path_width = max(len(project["news"]) for project in content + [{"news": "OUTPUT DIRECTORY"}]) + 2
-    cron_width = max(len(project["cronjob"]) for project in content + [{"cronjob": "CRON"}]) + 2
+    name_width = max(len(project["name"]) for project in content + [{"name": "NAME"}])
+    path_width = max(len(project["news"]) for project in content + [{"news": "OUTPUT DIRECTORY"}])
+    cron_width = max(len(project["cronjob"]) for project in content + [{"cronjob": "CRONJOB"}])
 
-    # Print header line
-    typer.echo(f"{'NAME':<{name_width}} {'OUTPUT DIRECTORY':<{path_width}} CRONJOB")
-    typer.echo("-" * (name_width + path_width + cron_width))
+    # Define horizontal separators
+    separator_sup = f"┌{'─' * (name_width + 2)}┬{'─' * (path_width + 2)}┬{'─' * (cron_width + 2)}┐"
+    separator_mid = f"├{'─' * (name_width + 2)}┼{'─' * (path_width + 2)}┼{'─' * (cron_width + 2)}┤"
+    separator_inf = f"└{'─' * (name_width + 2)}┴{'─' * (path_width + 2)}┴{'─' * (cron_width + 2)}┘"
 
-    # Print each project informaitons
+    # Print header
+    typer.echo(separator_sup)
+    typer.echo(
+        f"│ {'NAME':<{name_width}} "
+        f"│ {'OUTPUT DIRECTORY':<{path_width}} "
+        f"│ {'CRONJOB':<{cron_width}} │"
+    )
+
+    typer.echo(separator_mid)
+
+    # Print rows
     for project in content:
         typer.echo(
-            f"{project['name']:<{name_width}} "
-            f"{project['news']:<{path_width}} "
-            f"{project['cronjob']}"
+            f"│ {project['name']:<{name_width}} "
+            f"│ {project['news']:<{path_width}} "
+            f"│ {project['cronjob']:<{cron_width}} │"
         )
+
+    typer.echo(separator_inf)
 
 
 @app.command()

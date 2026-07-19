@@ -158,11 +158,11 @@ def edit(
         return
 
     changed = {
-        "OPML URL": True if OPML_URL else False,
-        "API Key": True if API_KEY else False,
-        "News Path": True if NEWS_PATH else False,
-        "Language": True if LANGUAGE else False,
-        "Frequency": True if FREQUENCY else False,
+        "OPML URL": OPML_URL is not None,
+        "API Key": API_KEY is not None,
+        "News Path": NEWS_PATH is not None,
+        "Language": LANGUAGE is not None,
+        "Frequency": FREQUENCY is not None,
     }
 
     # Load configuration file.
@@ -385,10 +385,10 @@ def ls():
                         hour = f"{moment[1]}:00"
                         if moment[2] != "*":
                             day = moment[2]
-                            cronjob = f"Cronjob at {hour} every {day} of each month."
+                            cronjob = f"Day {day} at {hour}"
                         elif moment[4] != "*":
-                            day = DAYS_REVERSE[moment[4]].capitalize() if moment[4] in DAYS_REVERSE.keys() else "Unknown"
-                            cronjob = f"Cronjob at {hour} every {day} of each week."
+                            day = DAYS_REVERSE.get(moment[4], "Unknown").capitalize()
+                            cronjob = f"{day} at {hour}"
                         break
 
             content.append({
@@ -397,9 +397,22 @@ def ls():
                 "cronjob": cronjob
             })
 
-    # Print name and news directory for each project.
+    # Compute column widths
+    name_width = max(len(project["name"]) for project in content + [{"name": "NAME"}]) + 2
+    path_width = max(len(project["news"]) for project in content + [{"news": "OUTPUT DIRECTORY"}]) + 2
+    cron_width = max(len(project["cronjob"]) for project in content + [{"cronjob": "CRON"}]) + 2
+
+    # Print header line
+    typer.echo(f"{'NAME':<{name_width}} {'OUTPUT DIRECTORY':<{path_width}} CRONJOB")
+    typer.echo("-" * (name_width + path_width + cron_width))
+
+    # Print each project informaitons
     for project in content:
-        typer.echo(f"- {project["name"]:<15} {project["news"]:<50} ({project["cronjob"]})")
+        typer.echo(
+            f"{project['name']:<{name_width}} "
+            f"{project['news']:<{path_width}} "
+            f"{project['cronjob']}"
+        )
 
 
 @app.command()

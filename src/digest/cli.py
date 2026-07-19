@@ -250,12 +250,12 @@ def cron(
     CONFIG_PATH = os.path.join(DIGEST_DIR, f"config.{NAME}.env")
     DIGEST_PATH = shutil.which("digest")
 
-    # Load configuration file.
-    load_dotenv(CONFIG_PATH, override=False)
-
     if not os.path.exists(CONFIG_PATH):
         typer.echo(f"[INFO] Project not found. To initialize a new project, run `digest init {NAME}`")
         return
+
+    # Load configuration file.
+    load_dotenv(CONFIG_PATH, override=False)
 
     FREQUENCY = os.getenv("FREQUENCY")
     

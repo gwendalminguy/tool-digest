@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tool-digest"
-version = "0.2.0"
+version = "0.2.1"
 authors = [
-    { name="Gwendal Minguy-Pèlerin", email="gwendalminguy@outlook.fr" }
+    { name = "Gwendal Minguy-Pèlerin", email = "gwendalminguy@outlook.fr" }
 ]
 description = "Technical watch summarization tool."
 readme = "README.md"
@@ -17,7 +17,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent"
 ]
-license = { file="LICENSE" }
+license = { file = "LICENSE" }
 maintainers = [
   { name = "Gwendal Minguy-Pèlerin", email = "gwendalminguy@outlook.fr" }
 ]
@@ -37,6 +37,17 @@ digest = "digest.cli:app"
 Homepage = "https://github.com/gwendalminguy/tool-digest"
 Repository = "https://github.com/gwendalminguy/tool-digest"
 Changelog = "https://github.com/gwendalminguy/tool-digest/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.1.0,<9.2.0",
+    "pytest-mock>=3.15.0,<3.16.0"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
 
 [tool.setuptools.packages.find]
 where = ["src"]

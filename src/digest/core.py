@@ -203,7 +203,7 @@ def digest_news(LANGUAGE: str, API_KEY:str, content: list, silent: bool) -> dict
     return result
 
 
-def generate_markdown(DATES: tuple, NEWS_PATH: str, digest: dict, length: tuple) -> str:
+def generate_markdown(DATES: tuple, NEWS_PATH: str, news: dict, length: tuple) -> str:
     """
     Transform a structured JSON into a readable markdown file.
     """
@@ -217,7 +217,7 @@ def generate_markdown(DATES: tuple, NEWS_PATH: str, digest: dict, length: tuple)
     lines.append(f"**Source:** {length[0]} articles from {length[1]} feeds.\n")
 
     # Create highlights section.
-    highlights = digest.get("highlights", [])
+    highlights = news.get("highlights", [])
 
     if highlights:
         lines.append("## Highlights\n")
@@ -227,11 +227,11 @@ def generate_markdown(DATES: tuple, NEWS_PATH: str, digest: dict, length: tuple)
         lines.append("")
 
     # Create details section and build each category.
-    details = digest.get("summary", [])
+    details = news.get("summary", [])
 
     if details:
         lines.append("## Details\n")
-        for section in digest.get("summary", []):
+        for section in news.get("summary", []):
             if not isinstance(section, dict):
                 continue
 

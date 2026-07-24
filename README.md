@@ -1,10 +1,16 @@
 # Digest
 
+<div align="center">
+    <a href="https://pypi.org/project/tool-digest">
+        <img src="https://img.shields.io/pypi/v/tool-digest?color=blue">
+    </a>
+</div>
+
 Digest is a simple tool to summarize a group of RSS feeds as a single markdown file on a regular basis.
 
 ## Description
 
-Digest helps easily keep up with many news source feeds and summarize them. Those summarized news are saved in markdown format in the `news/` directory (automatically created if not existing). The aim of this project is to provide an easy way to automatically produce a weekly news digest from a group of RSS feeds.
+Digest helps easily keep up with many news source feeds and summarize them. Those summarized news are saved in markdown format in the `news/` directory (automatically created if not existing). The aim of this project is to provide an easy way to automatically produce a weekly or monthly news digest from a group of RSS feeds.
 
 ## Flow Logic
 
@@ -73,6 +79,8 @@ The project contains several files and directories, which are the following:
 | [`src/digest/cli.py`](https://github.com/gwendalminguy/tool-digest/blob/main/src/digest/cli.py) | The python module containing command-line interface functions. |
 | [`src/digest/core.py`](https://github.com/gwendalminguy/tool-digest/blob/main/src/digest/core.py) | The python module containing core functions. |
 | [`src/digest/instructions.md`](https://github.com/gwendalminguy/tool-digest/blob/main/src/digest/instructions.md) | The markdown file containing AI instructions to produce a structured JSON output. |
+| [`tests/core/`](https://github.com/gwendalminguy/tool-digest/blob/main/tests/core/) | The directory for core functions tests. |
+| [`tests/conftest.py`](https://github.com/gwendalminguy/tool-digest/blob/main/tests/conftest.py) | The tests configuration file. |
 | [`CHANGELOG.md`](https://github.com/gwendalminguy/tool-digest/blob/main/CHANGELOG.md) | The markdown file listing the changes history of the tool. |
 | [`LICENSE`](https://github.com/gwendalminguy/tool-digest/blob/main/LICENSE) | The text file defining the license of the tool. |
 | [`README.md`](https://github.com/gwendalminguy/tool-digest/blob/main/README.md) | The markdown file introducting the tool. |

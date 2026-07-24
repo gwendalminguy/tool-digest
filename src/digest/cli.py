@@ -533,8 +533,14 @@ def run(
 
     try:
         feeds = get_feeds(OPML_URL)
+        if not silent:
+            typer.echo(f"[INFO] {len(feeds)} source feeds retrieved.")
         content = get_news(DATES, feeds, silent)
-        result = digest_news(LANGUAGE, API_KEY, content, silent)
+        if not silent:
+            typer.echo(f"[INFO] {len(content)} articles fetched.")
+        news = digest_news(LANGUAGE, API_KEY, content, silent)
+        if not silent:
+            typer.echo("[INFO] News summarized.")
     except RuntimeError as e:
         if not silent:
             typer.echo(f"[ERROR] {e}")
@@ -542,8 +548,8 @@ def run(
 
     length = (len(content), len(feeds))
 
-    if result:
-        filename = generate_markdown(DATES, NEWS_PATH, result, length)
+    if news:
+        filename = generate_markdown(DATES, NEWS_PATH, news, length)
         if not silent:
             typer.echo(f"[INFO] Digest generated successfully at: {filename}")
 

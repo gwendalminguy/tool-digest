@@ -533,8 +533,14 @@ def run(
 
     try:
         feeds = get_feeds(OPML_URL)
+        if not silent:
+            typer.echo(f"[INFO] {len(feeds)} source feeds retrieved.")
         content = get_news(DATES, feeds, silent)
+        if not silent:
+            typer.echo(f"[INFO] {len(content)} articles fetched.")
         news = digest_news(LANGUAGE, API_KEY, content, silent)
+        if not silent:
+            typer.echo("[INFO] News summarized.")
     except RuntimeError as e:
         if not silent:
             typer.echo(f"[ERROR] {e}")

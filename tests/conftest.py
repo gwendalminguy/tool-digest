@@ -8,6 +8,17 @@ import pytest
 
 
 @pytest.fixture
+def tmp_news_dir(tmp_path):
+    """
+    Temporary news/ directory for markdown files.
+    """
+    news_dir = tmp_path / "news"
+    news_dir.mkdir()
+
+    return news_dir
+
+
+@pytest.fixture
 def make_entry():
     def _make(
         title="Article",

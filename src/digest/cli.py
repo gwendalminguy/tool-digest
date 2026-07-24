@@ -154,15 +154,15 @@ def edit(
         raise typer.Exit(code=1)
 
     if not os.path.exists(CONFIG_PATH):
-        typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
+        typer.echo(f"[INFO] Project not found. To initialize it as a new project, run `digest init {NAME}`")
         return
 
     changed = {
-        "OPML URL": True if OPML_URL else False,
-        "API Key": True if API_KEY else False,
-        "News Path": True if NEWS_PATH else False,
-        "Language": True if LANGUAGE else False,
-        "Frequency": True if FREQUENCY else False,
+        "OPML URL": OPML_URL is not None,
+        "API Key": API_KEY is not None,
+        "News Path": NEWS_PATH is not None,
+        "Language": LANGUAGE is not None,
+        "Frequency": FREQUENCY is not None,
     }
 
     # Load configuration file.
@@ -218,8 +218,16 @@ def edit(
         if not force and not typer.confirm(f"[WARNING] Update {', '.join(elements)} for {NAME}?"):
             raise typer.Abort()
     else:
-        typer.echo("[ERROR] No change made. Run [digest edit <name> <option> <value>] to edit an existing project.")
+        typer.echo(f"[ERROR] No change made. To edit an existing project, run `digest edit {NAME} <option> <value>`")
         raise typer.Exit(code=1)
+
+    # Warn for potential cronjob mismatch.
+    if changed["Frequency"]:
+        typer.echo(
+            f"[WARNING] Changed frequency to {'weekly' if FREQUENCY == "weekly" else 'monthly'} mode. "
+            f"If a cronjob already exists for {NAME}, it may now be out of sync. "
+            f"To regenerate it, run `digest cron {NAME} [-d <day> -h <hour>]`"
+        )
 
     # Overwrite configuration file in ~/.digest/
     with open(CONFIG_PATH, "w", encoding="utf-8") as file:
@@ -231,28 +239,28 @@ def edit(
 @app.command()
 def cron(
     name: str = typer.Argument(help="Name of the project to create a cronjob for."),
-    hour: int = typer.Option(9, "--hour", "-H", help="Hour of the day.", min=0, max=23),
-    day: str = typer.Option(None, "--day", "-d", help="Day of the week or month.")
+    hour: int = typer.Option(9, "--hour", "-H", help="Execution hour (1-23).", min=0, max=23),
+    day: str = typer.Option(None, "--day", "-d", help="Execution day (weekly: monday-sunday, monthly: 1-28).")
 ):
     """
-    Create a cronjob to run Digest every week for the specified project.
+    Create a cronjob to run Digest weekly or monthly for the specified project.
     """
     NAME = name.strip().lower()
     DIGEST_DIR = os.path.expanduser("~/.digest")
     CONFIG_PATH = os.path.join(DIGEST_DIR, f"config.{NAME}.env")
     DIGEST_PATH = shutil.which("digest")
 
+    if not os.path.exists(CONFIG_PATH):
+        typer.echo(f"[INFO] Project not found. To initialize a new project, run `digest init {NAME}`")
+        return
+
     # Load configuration file.
     load_dotenv(CONFIG_PATH, override=False)
-
-    if not os.path.exists(CONFIG_PATH):
-        typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
-        return
 
     FREQUENCY = os.getenv("FREQUENCY")
     
     if FREQUENCY not in FREQUENCIES:
-        typer.echo("[ERROR] No frequency found. Run [digest edit <name> --frequency weekly|monthly] to define it.")
+        typer.echo(f"[ERROR] No frequency found. To define it, run `digest edit {NAME} --frequency weekly|monthly`")
         raise typer.Exit(code=1)
 
     if not re.match("^[a-z0-9][a-z0-9_-]*$", NAME):
@@ -296,7 +304,7 @@ def cron(
         result = subprocess.run(["crontab", "-l"], capture_output=True, text=True)
         current = result.stdout if result.returncode == 0 else ""
     except FileNotFoundError as e:
-        typer.echo("[ERROR] Cron not installed. On Debian/Ubuntu, run [apt install cron] to install it.")
+        typer.echo("[ERROR] Cron not installed. To install it on Debian/Ubuntu, run `apt install cron`")
         raise typer.Exit(code=1)
 
     crontab = current.splitlines()
@@ -316,11 +324,11 @@ def cron(
 
     # Weekly Mode
     if FREQUENCY == "weekly":
-        typer.echo(f"[INFO] Cronjob successfully added for {NAME}. Digest will run every {day.capitalize()} at {hour}:00.")
+        typer.echo(f"[INFO] Cronjob successfully generated for {NAME}. Digest will run every {day.capitalize()} at {hour}:00.")
 
     # Monthly Mode
     elif FREQUENCY == "monthly":
-        typer.echo(f"[INFO] Cronjob successfully added for {NAME}. Digest will run on the {day} of every month at {hour}:00.")
+        typer.echo(f"[INFO] Cronjob successfully generated for {NAME}. Digest will run on the {day} of every month at {hour}:00.")
 
 
 @app.command()
@@ -340,7 +348,7 @@ def ls():
         ]
 
     if not files:
-        typer.echo("[INFO] No project found. Run [digest init <name>] to initialize a new project.")
+        typer.echo("[INFO] No project found. To initialize a new project, run `digest init <name>`")
         return
 
     # Retrieve cronjobs.
@@ -366,7 +374,7 @@ def ls():
                 elif key == "NEWS_PATH":
                     news_path = value
 
-            cronjob = "No cronjob configured."
+            cronjob = "None"
 
             # Get cronjob if one is configured.
             if crontab:
@@ -377,10 +385,10 @@ def ls():
                         hour = f"{moment[1]}:00"
                         if moment[2] != "*":
                             day = moment[2]
-                            cronjob = f"Cronjob at {hour} every {day} of each month."
+                            cronjob = f"Day {day} at {hour}"
                         elif moment[4] != "*":
-                            day = DAYS_REVERSE[moment[4]].capitalize() if moment[4] in DAYS_REVERSE.keys() else "Unknown"
-                            cronjob = f"Cronjob at {hour} every {day} of each week."
+                            day = DAYS_REVERSE.get(moment[4], "Unknown").capitalize()
+                            cronjob = f"{day} at {hour}"
                         break
 
             content.append({
@@ -389,9 +397,35 @@ def ls():
                 "cronjob": cronjob
             })
 
-    # Print name and news directory for each project.
+    # Compute column widths
+    name_width = max(len(project["name"]) for project in content + [{"name": "NAME"}])
+    path_width = max(len(project["news"]) for project in content + [{"news": "OUTPUT DIRECTORY"}])
+    cron_width = max(len(project["cronjob"]) for project in content + [{"cronjob": "CRONJOB"}])
+
+    # Define horizontal separators
+    separator_sup = f"┌{'─' * (name_width + 2)}┬{'─' * (path_width + 2)}┬{'─' * (cron_width + 2)}┐"
+    separator_mid = f"├{'─' * (name_width + 2)}┼{'─' * (path_width + 2)}┼{'─' * (cron_width + 2)}┤"
+    separator_inf = f"└{'─' * (name_width + 2)}┴{'─' * (path_width + 2)}┴{'─' * (cron_width + 2)}┘"
+
+    # Print header
+    typer.echo(separator_sup)
+    typer.echo(
+        f"│ {'NAME':<{name_width}} "
+        f"│ {'OUTPUT DIRECTORY':<{path_width}} "
+        f"│ {'CRONJOB':<{cron_width}} │"
+    )
+
+    typer.echo(separator_mid)
+
+    # Print rows
     for project in content:
-        typer.echo(f"- {project["name"]:<15} {project["news"]:<50} ({project["cronjob"]})")
+        typer.echo(
+            f"│ {project['name']:<{name_width}} "
+            f"│ {project['news']:<{path_width}} "
+            f"│ {project['cronjob']:<{cron_width}} │"
+        )
+
+    typer.echo(separator_inf)
 
 
 @app.command()
@@ -411,7 +445,7 @@ def rm(
         raise typer.Exit(code=1)
 
     if not os.path.exists(CONFIG_PATH):
-        typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
+        typer.echo(f"[INFO] Project not found. To initialize a new project, run `digest init {NAME}`")
         return
 
     # Confirm removal.
@@ -464,7 +498,7 @@ def run(
 
     if not os.path.exists(CONFIG_PATH):
         if not silent:
-            typer.echo("[INFO] Project not found. Run [digest init <name>] to initialize a new project.")
+            typer.echo(f"[INFO] Project not found. To initialize a new project, run `digest init {NAME}`")
         return
 
     # Load configuration file.
@@ -478,7 +512,7 @@ def run(
     FREQUENCY = os.getenv("FREQUENCY")
     
     if FREQUENCY not in FREQUENCIES:
-        typer.echo("[ERROR] No frequency found. Run [digest edit <name> --frequency weekly|monthly] to define it.")
+        typer.echo(f"[ERROR] No frequency found. To define one, run `digest edit {NAME} --frequency weekly|monthly`")
         raise typer.Exit(code=1)
 
     if not OPML_URL or not API_KEY or not NEWS_PATH:
@@ -499,8 +533,14 @@ def run(
 
     try:
         feeds = get_feeds(OPML_URL)
+        if not silent:
+            typer.echo(f"[INFO] {len(feeds)} source feeds retrieved.")
         content = get_news(DATES, feeds, silent)
-        result = digest_news(LANGUAGE, API_KEY, content, silent)
+        if not silent:
+            typer.echo(f"[INFO] {len(content)} articles fetched.")
+        news = digest_news(LANGUAGE, API_KEY, content, silent)
+        if not silent:
+            typer.echo("[INFO] News summarized.")
     except RuntimeError as e:
         if not silent:
             typer.echo(f"[ERROR] {e}")
@@ -508,8 +548,8 @@ def run(
 
     length = (len(content), len(feeds))
 
-    if result:
-        filename = generate_markdown(DATES, NEWS_PATH, result, length)
+    if news:
+        filename = generate_markdown(DATES, NEWS_PATH, news, length)
         if not silent:
             typer.echo(f"[INFO] Digest generated successfully at: {filename}")
 

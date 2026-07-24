@@ -2,11 +2,20 @@
 
 This document tracks the history for notable changes to **Digest**.
 
+## [0.2.1] - 2026-07-24
+
+### Improvements
+
+- Added unit tests covering core functions
+- `digest ls` command displays a more readable output with a clean, formatted table
+- Articles with no title, link or description are now correctly ignored.
+- A warning is now displayed when using `digest edit` to change the frequency of a Digest if it already has a cronjob configured
+
 ## [0.2.0] - 2026-07-05
 
 ### Breaking Changes
 
-- Removed `INTERVAL` configuration key and `--interval` option from `digest init` and `digest edit` commands
+- Removed `INTERVAL` configuration key
 - `digest cron` command reads cadence from new `FREQUENCY` configuration key
 - `--day` is now polymorphic, and has to be a string in `weekly` mode (`monday`, etc.), and an integer in `monthly` mode (`1`–`28`)
 
@@ -19,7 +28,7 @@ This document tracks the history for notable changes to **Digest**.
 
 ### Migration
 
-Existing projects from vesion **0.1.0** using `INTERVAL` are silently ignored. To migrate:
+Existing projects from version **0.1.0** using `INTERVAL` are silently ignored. To migrate:
 
 ```bash
 $ digest edit <name> --frequency weekly

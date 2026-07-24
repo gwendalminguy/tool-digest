@@ -2,10 +2,8 @@
 test_generate_markdown.py
 Tests for generate_markdown core function.
 """
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from digest.core import generate_markdown
-
-import pytest
 
 
 DATES = (
@@ -51,7 +49,7 @@ INCOMPLETE_JSON = {
 
 
 def test_generate_markdown_complete_json_output(tmp_news_dir):
-    generate_markdown(DATES, tmp_news_dir, COMPLETE_JSON, (2, 1))
+    generate_markdown(DATES, str(tmp_news_dir), COMPLETE_JSON, (2, 1))
 
     file_name = f"{DATES[1].strftime('%Y-%m-%d')}.md"
     file_path = tmp_news_dir / file_name
@@ -78,7 +76,7 @@ def test_generate_markdown_complete_json_output(tmp_news_dir):
 
 
 def test_generate_markdown_incomplete_json_output(tmp_news_dir):
-    generate_markdown(DATES, tmp_news_dir, INCOMPLETE_JSON, (2, 1))
+    generate_markdown(DATES, str(tmp_news_dir), INCOMPLETE_JSON, (2, 1))
 
     file_name = f"{DATES[1].strftime('%Y-%m-%d')}.md"
     file_path = tmp_news_dir / file_name

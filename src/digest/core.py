@@ -239,7 +239,7 @@ def generate_markdown(DATES: tuple, NEWS_PATH: str, news: dict, length: tuple) -
             lines.append(f"- ### {category}\n")
 
             for item in section.get("items", []):
-                if not isinstance(item, dict):
+                if not isinstance(item, dict) or not item:
                     continue
 
                 title = item.get("title", "*Untitled*")

@@ -1,7 +1,9 @@
 # Digest
 
 <div align="center">
-  <img src="https://img.shields.io/pypi/v/tool-digest?color=blue">
+    <a href="https://pypi.org/project/tool-digest">
+        <img src="https://img.shields.io/pypi/v/tool-digest?color=blue">
+    </a>
 </div>
 
 Digest is a simple tool to summarize a group of RSS feeds as a single markdown file on a regular basis.

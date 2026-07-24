@@ -40,8 +40,8 @@ def get_feeds(OPML_URL: str) -> list:
     # Parse XML.
     try:
         root = ElementTree.fromstring(response.content)
-    except ElementTree.ParseError:
-        raise RuntimeError("Failed to parse XML.")
+    except ElementTree.ParseError as e:
+        raise RuntimeError(f"Failed to parse XML: {e}")
 
     feeds = []
 

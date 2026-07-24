@@ -8,9 +8,32 @@ import pytest
 import requests
 
 
-VALID_OPML = b"<opml><body><outline text='Test' title='Test'><outline text='A' xmlUrl='http://a'/><outline title='B' xmlUrl='http://b'/></outline></body></opml>"
-INVALID_OPML = b"<opml><body><outline text='Test' title='Test'><outline text='A' xmlUrl='http://a'/><outline title='B' xmlUrl='http://b'/></opml>"
-EMPTY_OPML = b"<opml><body></body></opml>"
+VALID_OPML = b"""
+    <opml>
+        <body>
+            <outline text='Test' title='Test'>
+                <outline title='A' xmlUrl='http://a.com/feed'/>
+                <outline title='B' xmlUrl='http://b.com/feed'/>
+            </outline>
+        </body>
+    </opml>
+"""
+
+INVALID_OPML = b"""
+    <opml>
+        <body>
+            <outline text='Test' title='Test'>
+                <outline text='A' xmlUrl='http://a'/>
+                <outline title='B' xmlUrl='http://b'/>
+    </opml>
+"""
+
+EMPTY_OPML = b"""
+    <opml>
+        <body>
+        </body>
+    </opml>
+"""
 
 
 def test_get_feeds_success(mocker):
@@ -22,6 +45,8 @@ def test_get_feeds_success(mocker):
 
     feeds = get_feeds("http://valid.com/feeds.opml")
     assert len(feeds) == 2
+    assert feeds[0] == {"title": "A", "url": "http://a.com/feed"}
+    assert feeds[1] == {"title": "B", "url": "http://b.com/feed"}
 
 
 def test_get_feeds_innaccessible_opml_url(mocker):
@@ -38,7 +63,7 @@ def test_get_feeds_invalid_opml_content(mocker):
 
     mocker.patch("digest.core.requests.get", return_value=mock_response)
 
-    with pytest.raises(RuntimeError, match=r"Failed to parse ML: .*"):
+    with pytest.raises(RuntimeError, match=r"Failed to parse XML: .*"):
         feeds = get_feeds("http://valid.com/feeds.opml")
 
 
